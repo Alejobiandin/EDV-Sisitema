@@ -5,7 +5,7 @@
 - [x] Fase 3: Integrar el motor de razonamiento LLM consultando la memoria institucional basada en ADN Organizacional (RAG contextual)
 - [x] Fase 4: Implementar el motor de orquestación y el sistema de señales nerviosas para flujos multiagente autónomos
 - [x] Fase 5: Conectar la ejecución de los agentes al dashboard en tiempo real, trazabilidad, auditoría y aprobaciones `human-in-the-loop`
-- [ ] Fase 6: Ejecutar y verificar un caso de uso end-to-end (ej. simulación de liquidación de sueldos y cálculo impositivo con validación normativa)
+- [x] Fase 6: Ejecutar y verificar un caso de uso end-to-end (ej. simulación de liquidación de sueldos y cálculo impositivo con validación normativa)
 - [x] Fase 7: Validar con pruebas automatizadas, guardar checkpoint y entregar al usuario
 - [x] Corregir y tipar el motor de agentes con el esquema Drizzle real y salida LLM estructurada
 - [x] Implementar `agents.executeTask` para disparar tareas impositivas, salariales y de cargas sociales
@@ -17,3 +17,4 @@
 - [x] Guardar checkpoint de la implementación funcional y documentar límites normativos
 
 > Nota de alcance: los porcentajes y umbrales de cálculo incluidos en esta versión son parámetros demostrativos configurables; no constituyen liquidación legal válida sin validación profesional y actualización normativa.
+- [x] Agregar exportación de reportes de IVA y salarios a PDF y Excel, con endpoints protegidos, descargas desde dashboard y pruebas de generación

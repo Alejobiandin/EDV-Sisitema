@@ -178,7 +178,7 @@ Genera una justificación técnica profesional, cita el criterio institucional u
   const taskStatus = requiresApproval ? "pending_approval" : "completed";
   const insertedTask = await db.insert(tasks).values({
     name: `${agent.name}: ${input.taskType.replaceAll("_", " ").toUpperCase()} - ${input.payload.clientName ?? "Cliente"}`,
-    description: JSON.stringify({ inputPayload: input.payload, outputResult: { deterministicResult: deterministic.result, justification: llmInsight }, risk: requiresApproval ? "high" : "low" }),
+    description: JSON.stringify({ taskType: input.taskType, inputPayload: input.payload, outputResult: { deterministicResult: deterministic.result, justification: llmInsight }, risk: requiresApproval ? "high" : "low" }),
     status: taskStatus,
     approvalStatus: requiresApproval ? "pending" : "not_required",
     approvalRequestedAt: requiresApproval ? new Date() : null,
