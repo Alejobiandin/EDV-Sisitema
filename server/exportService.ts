@@ -7,27 +7,33 @@ export type ExportReportPayload = {
   period: string;
   data: Record<string, unknown>;
   generatedBy?: string;
+  companyTaxId?: string;
+  companyName?: string;
+  logoText?: string;
 };
 
 export async function generateExcelReport(payload: ExportReportPayload): Promise<Buffer> {
   const workbook = new ExcelJS.Workbook();
-  workbook.creator = "Sistema Organizacional Cognitivo Multiagente";
+  workbook.creator = payload.companyName ?? "EDV - Sistema Organizacional Cognitivo";
   workbook.created = new Date();
-  const sheet = workbook.addWorksheet(payload.reportType === "tax" ? "Determinación IVA" : "Liquidación Haberes");
+  const sheet = workbook.addWorksheet(payload.reportType === "tax" ? "Determinación IVA EDV" : "Liquidación Haberes EDV");
 
   sheet.columns = [
-    { header: "Concepto / Parámetro", key: "concept", width: 36 },
-    { header: "Valor / Importe", key: "value", width: 24 },
+    { header: "Concepto / Parámetro Institucional", key: "concept", width: 40 },
+    { header: "Valor / Importe", key: "value", width: 26 },
   ];
 
   sheet.getRow(1).font = { bold: true, color: { argb: "FFFFFF" } };
   sheet.getRow(1).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "1E3A8A" } };
 
+  sheet.addRow({ concept: "Sistema Organizacional", value: "EDV · Plataforma Cognitiva Multiagente" });
+  sheet.addRow({ concept: "Empresa / Contribuyente", value: payload.companyName ?? "Estudio Contable EDV S.A." });
+  sheet.addRow({ concept: "CUIT / Datos Fiscales", value: payload.companyTaxId ?? "CUIT: 30-71458921-4" });
   sheet.addRow({ concept: "Reporte Institucional", value: payload.reportType === "tax" ? "Determinación Impositiva (IVA)" : "Liquidación de Sueldos y Cargas" });
   sheet.addRow({ concept: "Cliente / Entidad", value: payload.clientName });
   sheet.addRow({ concept: "Período Fiscal", value: payload.period });
   sheet.addRow({ concept: "Fecha de Emisión", value: new Date().toLocaleString() });
-  sheet.addRow({ concept: "Generado por", value: payload.generatedBy ?? "Célula Cognitiva Autorizada" });
+  sheet.addRow({ concept: "Generado por", value: payload.generatedBy ?? "Célula Cognitiva Autorizada EDV" });
   sheet.addRow({ concept: "", value: "" });
 
   const data = payload.data;
@@ -37,7 +43,7 @@ export async function generateExcelReport(payload: ExportReportPayload): Promise
     sheet.addRow({ concept: "Débito Fiscal IVA", value: data.vatDebits ?? 0 });
     sheet.addRow({ concept: "Crédito Fiscal IVA", value: data.vatCredits ?? 0 });
     sheet.addRow({ concept: "Saldo Técnico a Pagar", value: data.netVatDue ?? 0 });
-    sheet.addRow({ concept: "Fuente Normativa / ADN", value: data.parameterSource ?? "ADN Organizacional" });
+    sheet.addRow({ concept: "Fuente Normativa / ADN EDV", value: data.parameterSource ?? "ADN Organizacional" });
   } else {
     sheet.addRow({ concept: "Sueldo Básico", value: data.baseSalary ?? 0 });
     sheet.addRow({ concept: "Pago Horas Extra", value: data.overtimePay ?? 0 });
@@ -65,16 +71,18 @@ export async function generatePdfReport(payload: ExportReportPayload): Promise<B
     doc.on("end", () => resolve(Buffer.concat(chunks)));
     doc.on("error", err => reject(err));
 
-    // Encabezado institucional
-    doc.fontSize(20).fillColor("#1E3A8A").text("ESTUDIO CONTABLE COGNITIVO", { align: "left" });
-    doc.fontSize(10).fillColor("#4B5563").text("Arquitectura Organizacional Multiagente con Memoria Institucional", { align: "left" });
-    doc.moveDown(1);
+    // Cabecera institucional EDV con logotipo tipográfico y datos fiscales
+    doc.rect(50, 45, 495, 65).fill("#1E3A8A");
+    doc.fontSize(22).fillColor("#FFFFFF").text(payload.logoText ?? "EDV", 65, 57, { continued: true });
+    doc.fontSize(10).fillColor("#93C5FD").text("  |  SISTEMA COGNITIVO MULTIAGENTE", { baseline: "bottom" });
+    doc.fontSize(9.5).fillColor("#E2E8F0").text(`${payload.companyName ?? "Estudio Contable EDV S.A."}  ·  ${payload.companyTaxId ?? "CUIT: 30-71458921-4"}`, 65, 82);
+    doc.moveDown(3);
 
     doc.fontSize(14).fillColor("#111827").text(payload.reportType === "tax" ? "REPORTE DE DETERMINACIÓN IMPOSITIVA (IVA)" : "REPORTE DE LIQUIDACIÓN DE HABERES", { continued: false });
     doc.fontSize(10).fillColor("#374151").text(`Cliente / Entidad: ${payload.clientName}`);
-    doc.text(`Período: ${payload.period}`);
+    doc.text(`Período Fiscal: ${payload.period}`);
     doc.text(`Fecha de Emisión: ${new Date().toLocaleString()}`);
-    doc.text(`Célula Emisora: ${payload.generatedBy ?? "Área Especializada Cognitiva"}`);
+    doc.text(`Célula Emisora EDV: ${payload.generatedBy ?? "Área Especializada Cognitiva"}`);
     doc.moveDown(1);
 
     doc.moveTo(50, doc.y).lineTo(545, doc.y).strokeColor("#D1D5DB").stroke();
@@ -101,7 +109,7 @@ export async function generatePdfReport(payload: ExportReportPayload): Promise<B
     }
 
     doc.moveDown(2);
-    doc.fontSize(8).fillColor("#6B7280").text("Este documento fue generado automáticamente por la plataforma multiagente cognitiva. Los cálculos se basan en las reglas parametrizadas en el ADN Organizacional y deben ser validados por un profesional responsable antes de su presentación oficial.", { align: "justify" });
+    doc.fontSize(8).fillColor("#6B7280").text("Este documento fue generado y certificado por EDV, plataforma organizacional cognitiva. Los cálculos se basan en el motor determinístico Python y las reglas parametrizadas en el ADN Organizacional, sujetos a revisión profesional responsable.", { align: "justify" });
 
     doc.end();
   });

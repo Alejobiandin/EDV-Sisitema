@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import { calculateDeterministicAccounting } from "./agentEngine";
 
 describe("calculateDeterministicAccounting", () => {
-  it("usa la alícuota fiscal configurada en el ADN y eleva saldos sensibles", () => {
-    const result = calculateDeterministicAccounting(
+  it("usa la alícuota fiscal configurada en el ADN y eleva saldos sensibles", async () => {
+    const result = await calculateDeterministicAccounting(
       {
         taskType: "tax_computation",
         payload: { clientName: "Cliente de prueba", grossSales: 4_000_000, vatPurchases: 800_000 },
@@ -16,8 +16,8 @@ describe("calculateDeterministicAccounting", () => {
     expect(result.requiresApproval).toBe(false);
   });
 
-  it("activa HITL cuando la liquidación supera el umbral configurado por el motor", () => {
-    const result = calculateDeterministicAccounting({
+  it("activa HITL cuando la liquidación supera el umbral configurado por el motor", async () => {
+    const result = await calculateDeterministicAccounting({
       taskType: "payroll_liquidation",
       payload: { baseSalary: 1_600_000, overtimeHours: 0 },
     });
@@ -27,8 +27,8 @@ describe("calculateDeterministicAccounting", () => {
     expect(result.requiresApproval).toBe(true);
   });
 
-  it("calcula cargas patronales y no bloquea un caso de bajo riesgo", () => {
-    const result = calculateDeterministicAccounting({
+  it("calcula cargas patronales y no bloquea un caso de bajo riesgo", async () => {
+    const result = await calculateDeterministicAccounting({
       taskType: "social_charges",
       payload: { baseSalary: 500_000, overtimeHours: 2 },
     });
@@ -38,8 +38,8 @@ describe("calculateDeterministicAccounting", () => {
     expect(result.requiresApproval).toBe(false);
   });
 
-  it("mantiene el cálculo y solicita revisión si la regla del ADN es inválida", () => {
-    const result = calculateDeterministicAccounting(
+  it("mantiene el cálculo y solicita revisión si la regla del ADN es inválida", async () => {
+    const result = await calculateDeterministicAccounting(
       { taskType: "tax_computation", payload: { grossSales: 1_000_000, vatPurchases: 0 } },
       [{ name: "IVA - alícuota general", content: "no-json" }],
     );

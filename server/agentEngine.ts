@@ -2,6 +2,7 @@ import { invokeLLM } from "./_core/llm";
 import { getDb } from "./db";
 import { agents, organizationalDnaRules, organizationalDnaPolicies, tasks, taskExecutions, auditLog, notifications } from "../drizzle/schema";
 import { eq } from "drizzle-orm";
+import { runPythonCalculation } from "./pythonBridge";
 
 export type AgentTaskInput = {
   agentId: number;
@@ -38,67 +39,30 @@ export type DeterministicAccountingResult = {
   summary: string;
 };
 
-export function calculateDeterministicAccounting(input: Pick<AgentTaskInput, "taskType" | "payload">, rules: DnaRateRule[] = []): DeterministicAccountingResult {
-  const vatRate = readDnaRate(rules, "IVA - alícuota general", 0.21);
-  const retirementRate = readDnaRate(rules, "Aportes jubilatorios", 0.11);
-  const socialSecurityRate = readDnaRate(rules, "Aporte obra social", 0.03);
-  const unionRate = readDnaRate(rules, "Aporte convencional", 0.02);
-  const employerSocialRate = readDnaRate(rules, "Contribuciones patronales seguridad social", 0.16);
-  const employerFamilyRate = readDnaRate(rules, "Contribuciones asignaciones familiares", 0.045);
+export async function calculateDeterministicAccounting(input: Pick<AgentTaskInput, "taskType" | "payload">, rules: DnaRateRule[] = []): Promise<DeterministicAccountingResult> {
+  const rulesMap: Record<string, number> = {
+    "IVA - alícuota general": readDnaRate(rules, "IVA - alícuota general", 0.21),
+    "Aportes jubilatorios": readDnaRate(rules, "Aportes jubilatorios", 0.11),
+    "Aporte obra social": readDnaRate(rules, "Aporte obra social", 0.03),
+    "Aporte convencional": readDnaRate(rules, "Aporte convencional", 0.02),
+    "Contribuciones patronales seguridad social": readDnaRate(rules, "Contribuciones patronales seguridad social", 0.16),
+    "Contribuciones asignaciones familiares": readDnaRate(rules, "Contribuciones asignaciones familiares", 0.045),
+  };
 
-  if (input.taskType === "tax_computation") {
-    const sales = input.payload.grossSales ?? 0;
-    const purchases = input.payload.vatPurchases ?? 0;
-    const debits = sales * vatRate;
-    const credits = purchases * vatRate;
-    const vatBalance = debits - credits;
-    return {
-      result: {
-        taxType: "IVA / IIBB",
-        grossSales: sales,
-        vatRate,
-        vatDebits: debits,
-        vatCredits: credits,
-        netVatDue: vatBalance,
-        status: "Calculado con éxito",
-        parameterSource: "ADN Organizacional / regla vigente configurada",
-      },
-      requiresApproval: vatBalance > 500000,
-      summary: `Determinación impositiva procesada para ${input.payload.clientName ?? "Cliente General"}. Saldo técnico IVA: $${vatBalance.toFixed(2)}.`,
-    };
-  }
+  const pyRes = await runPythonCalculation({
+    taskType: input.taskType,
+    payload: input.payload,
+    rules: rulesMap,
+  });
 
-  if (input.taskType === "payroll_liquidation" || input.taskType === "social_charges") {
-    const base = input.payload.baseSalary ?? 350000;
-    const overtime = input.payload.overtimeHours ?? 0;
-    const overtimePay = overtime * (base / 160) * 1.5;
-    const gross = base + overtimePay;
-    const retirement = gross * retirementRate;
-    const socialSecurity = gross * socialSecurityRate;
-    const union = gross * unionRate;
-    const net = gross - (retirement + socialSecurity + union);
-    const employerSS = gross * employerSocialRate;
-    const employerFamily = gross * employerFamilyRate;
-    return {
-      result: {
-        baseSalary: base,
-        overtimePay,
-        grossSalary: gross,
-        employeeDeductions: { retirement, socialSecurity, union, total: retirement + socialSecurity + union },
-        netSalary: net,
-        employerContributions: { socialSecurity: employerSS, familyAllowances: employerFamily, total: employerSS + employerFamily },
-        parameters: { retirementRate, socialSecurityRate, unionRate, employerSocialRate, employerFamilyRate },
-        parameterSource: "ADN Organizacional / regla vigente configurada",
-      },
-      requiresApproval: gross > 1500000 || overtime > 20,
-      summary: `Liquidación de sueldos y cargas sociales calculada. Haberes brutos: $${gross.toFixed(2)}, Neto: $${net.toFixed(2)}.`,
-    };
+  if (!pyRes.success) {
+    throw new Error(pyRes.error || "Fallo en el motor de cálculos Python EDV");
   }
 
   return {
-    result: { message: "Revisión contable general completada sin anomalías." },
-    requiresApproval: false,
-    summary: "Revisión contable procesada por célula especializada.",
+    result: pyRes.result,
+    requiresApproval: pyRes.requiresApproval,
+    summary: pyRes.summary,
   };
 }
 
@@ -122,19 +86,19 @@ export async function executeCognitiveAgentTask(input: AgentTaskInput) {
   ].join("\n");
 
   await db.update(agents).set({ status: "in_task" }).where(eq(agents.id, agent.id));
-  const deterministic = calculateDeterministicAccounting(input, rules);
+  const deterministic = await calculateDeterministicAccounting(input, rules);
   let requiresApproval = deterministic.requiresApproval;
   let llmInsight = deterministic.summary;
 
   try {
-    const prompt = `Actúa como la célula agente "${agent.name}" (${agent.role}) en un estudio contable automatizado.
+    const prompt = `Actúa como la célula agente "${agent.name}" (${agent.role}) en EDV, el sistema organizacional cognitivo multiagente.
 Contexto de ADN Organizacional (Normas y Políticas):
 ${dnaContext || "No hay reglas cargadas todavía; declara esa ausencia."}
 
 Datos de la tarea:
 Tipo: ${input.taskType}
 Payload: ${JSON.stringify(input.payload)}
-Resultado determinístico preliminar: ${JSON.stringify(deterministic.result)}
+Resultado determinístico preliminar (calculado por motor Python EDV): ${JSON.stringify(deterministic.result)}
 
 Genera una justificación técnica profesional, cita el criterio institucional utilizado cuando exista y determina si requiere revisión humana por riesgo normativo o umbral de monto. Responde únicamente con JSON válido.`;
 
@@ -142,7 +106,7 @@ Genera una justificación técnica profesional, cita el criterio institucional u
       model: "gpt-5-mini",
       reasoning: { effort: "low" },
       messages: [
-        { role: "system", content: "Eres un agente contable cognitivo. No inventes normas: si faltan reglas en el ADN Organizacional, indícalo y recomienda revisión humana." },
+        { role: "system", content: "Eres un agente contable cognitivo de EDV. No inventes normas: si faltan reglas en el ADN Organizacional, indícalo y recomienda revisión humana." },
         { role: "user", content: prompt },
       ],
       response_format: {
@@ -189,7 +153,7 @@ Genera una justificación técnica profesional, cita el criterio institucional u
   await db.insert(taskExecutions).values({
     taskId,
     agentId: agent.id,
-    step: "Cálculo determinístico y razonamiento cognitivo",
+    step: "Cálculo determinístico Python y razonamiento cognitivo EDV",
     status: "completed",
     log: JSON.stringify({ taskType: input.taskType, requiresApproval, justification: llmInsight }),
     endTime: new Date(),
@@ -209,7 +173,7 @@ Genera una justificación técnica profesional, cita el criterio institucional u
       userId: input.userId,
       agentId: agent.id,
       type: "human_approval",
-      message: `La célula ${agent.name} requiere aprobación humana para ${input.taskType} (${input.payload.clientName ?? "Caso General"}).`,
+      message: `EDV: La célula ${agent.name} requiere aprobación humana para ${input.taskType} (${input.payload.clientName ?? "Caso General"}).`,
       isRead: 0,
     });
   } else {
@@ -217,7 +181,7 @@ Genera una justificación técnica profesional, cita el criterio institucional u
       userId: input.userId,
       agentId: agent.id,
       type: "task_completed",
-      message: `La célula ${agent.name} completó ${input.taskType} para ${input.payload.clientName ?? "Caso General"}.`,
+      message: `EDV: La célula ${agent.name} completó ${input.taskType} para ${input.payload.clientName ?? "Caso General"}.`,
       isRead: 0,
     });
   }
