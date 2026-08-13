@@ -12,7 +12,7 @@
 - [x] Agregar contrato de aprobación/rechazo de tareas de alto riesgo
 - [x] Mostrar panel HITL con detalle, aprobación, rechazo y actualización de estados
 - [x] Sembrar ADN Organizacional inicial para reglas fiscales, contables y laborales parametrizables
-- [ ] Verificar el flujo end-to-end interactivo con una tarea persistida, aprobación humana y refresco posterior del dashboard
+- [x] Verificar el flujo end-to-end interactivo con una tarea persistida, aprobación humana y refresco posterior del dashboard
 - [x] Escribir y ejecutar pruebas Vitest del motor y del flujo HITL
 - [x] Guardar checkpoint de la implementación funcional y documentar límites normativos
 
