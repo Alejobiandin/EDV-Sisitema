@@ -1,0 +1,262 @@
+import DashboardLayout from "@/components/DashboardLayout";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
+import { trpc } from "@/lib/trpc";
+import {
+  Activity,
+  ArrowUpRight,
+  Bell,
+  BrainCircuit,
+  CheckCircle2,
+  CircleDot,
+  Clock3,
+  Command,
+  FileText,
+  LayoutGrid,
+  ListTodo,
+  MoreHorizontal,
+  RefreshCw,
+  ShieldCheck,
+  Sparkles,
+  TimerReset,
+  TriangleAlert,
+  Users,
+  Zap,
+} from "lucide-react";
+import { useMemo } from "react";
+import { toast } from "sonner";
+
+const statusCopy = {
+  active: { label: "Activo", className: "border-emerald-200 bg-emerald-50 text-emerald-700" },
+  in_task: { label: "En tarea", className: "border-blue-200 bg-blue-50 text-blue-700" },
+  inactive: { label: "Inactivo", className: "border-slate-200 bg-slate-50 text-slate-500" },
+} as const;
+
+const activityColors = ["bg-blue-500", "bg-emerald-500", "bg-amber-500", "bg-violet-500"];
+const notificationCopy: Record<string, { label: string; tone: string }> = {
+  task_completed: { label: "Tarea completada", tone: "text-emerald-700 bg-emerald-50" },
+  agent_error: { label: "Error de célula", tone: "text-rose-700 bg-rose-50" },
+  human_approval: { label: "Aprobación humana", tone: "text-amber-700 bg-amber-50" },
+  system_alert: { label: "Alerta del sistema", tone: "text-blue-700 bg-blue-50" },
+  pattern_detected: { label: "Patrón detectado", tone: "text-violet-700 bg-violet-50" },
+};
+
+function MetricCard({
+  label,
+  value,
+  detail,
+  icon: Icon,
+  accent,
+}: {
+  label: string;
+  value: string | number;
+  detail: string;
+  icon: typeof Activity;
+  accent: string;
+}) {
+  return (
+    <Card className="overflow-hidden border-slate-200/80 bg-white/90 shadow-[0_12px_35px_rgba(15,32,54,0.06)] transition-transform duration-200 hover:-translate-y-0.5">
+      <CardContent className="relative p-5">
+        <div className={`absolute right-0 top-0 h-20 w-20 rounded-bl-[32px] ${accent} opacity-[0.08]`} />
+        <div className="relative flex items-start justify-between gap-4">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">{label}</p>
+            <p className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-[#10253f]">{value}</p>
+            <p className="mt-2 text-xs text-slate-500">{detail}</p>
+          </div>
+          <div className={`flex h-10 w-10 items-center justify-center rounded-2xl ${accent} text-white shadow-lg shadow-slate-200`}>
+            <Icon className="h-4 w-4" />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function EmptyState({ message }: { message: string }) {
+  return (
+    <div className="flex min-h-28 items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50/60 px-5 text-center text-sm text-slate-500">
+      {message}
+    </div>
+  );
+}
+
+function DashboardLoading() {
+  return <div className="space-y-6 p-4"><div className="space-y-3"><Skeleton className="h-3 w-52" /><Skeleton className="h-10 w-72" /><Skeleton className="h-4 w-[30rem] max-w-full" /></div><div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{Array.from({ length: 4 }).map((_, index) => <Skeleton key={index} className="h-36 rounded-2xl" />)}</div><Skeleton className="h-80 rounded-2xl" /></div>;
+}
+
+function DashboardError({ message }: { message: string }) {
+  return <div className="flex min-h-[60vh] items-center justify-center p-6"><Card className="max-w-lg border-rose-200 bg-white shadow-lg"><CardContent className="p-8 text-center"><TriangleAlert className="mx-auto h-10 w-10 text-rose-500" /><h2 className="mt-4 text-xl font-semibold text-[#10253f]">No pudimos leer las señales</h2><p className="mt-2 text-sm leading-6 text-slate-500">El centro de mando no pudo obtener el resumen del organismo. Revisa la conexión y vuelve a intentarlo.</p><p className="mt-3 rounded-lg bg-rose-50 p-3 text-xs text-rose-700">{message}</p></CardContent></Card></div>;
+}
+
+export function getDashboardRenderState(input: { isLoading: boolean; isError: boolean; hasData: boolean }) {
+  if (input.isLoading) return "loading" as const;
+  if (input.isError) return "error" as const;
+  return input.hasData ? "ready" as const : "empty" as const;
+}
+
+export default function Dashboard() {
+  const summaryQuery = trpc.dashboard.summary.useQuery(undefined, {
+    refetchInterval: 15_000,
+    refetchOnWindowFocus: true,
+  });
+  const markNotificationRead = trpc.systemLogs.notifications.update.useMutation();
+  const summary = summaryQuery.data;
+  const agents = summary?.agentsList ?? [];
+  const tasks = summary?.tasksList ?? [];
+  const recentActivity = summary?.recentActivity ?? [];
+  const notifications = summary?.notificationsList ?? [];
+  const activeRatio = summary?.totalAgents ? Math.round((summary.activeAgents / summary.totalAgents) * 100) : 0;
+  const dnaEntries = (summary?.totalRules ?? 0) + (summary?.totalPolicies ?? 0);
+  const taskBreakdown = useMemo(() => {
+    const counts = { pending: 0, in_progress: 0, completed: 0, failed: 0 };
+    tasks.forEach(task => {
+      if (task.status in counts) counts[task.status as keyof typeof counts] += 1;
+    });
+    return counts;
+  }, [tasks]);
+
+  const renderState = getDashboardRenderState({ isLoading: summaryQuery.isLoading, isError: summaryQuery.isError, hasData: Boolean(summary) });
+
+  if (renderState === "loading") {
+    return <DashboardLayout><DashboardLoading /></DashboardLayout>;
+  }
+
+  if (renderState === "error") {
+    return <DashboardLayout><DashboardError message={summaryQuery.error?.message ?? "Error desconocido"} /></DashboardLayout>;
+  }
+
+  const handleRefresh = async () => {
+    await summaryQuery.refetch();
+    toast.success("Estado del organismo actualizado");
+  };
+
+  const handleMarkRead = async (id: number) => {
+    await markNotificationRead.mutateAsync({ id, isRead: 1 });
+    await summaryQuery.refetch();
+    toast.success("Alerta marcada como revisada");
+  };
+
+  return (
+    <DashboardLayout>
+      <div className="min-h-screen bg-[#f6f8fb] text-[#10253f]">
+        <div className="mx-auto max-w-[1480px] space-y-6 px-1 pb-10 sm:px-4">
+          <header className="flex flex-col justify-between gap-5 pt-2 lg:flex-row lg:items-end">
+            <div>
+              <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-blue-600">
+                <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" />
+                Organismo digital · Centro de mando
+              </div>
+              <h1 className="text-3xl font-semibold tracking-[-0.045em] text-[#10253f] sm:text-4xl">Visión general</h1>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
+                Observa la actividad coordinada de tus células agente, el avance de los workflows y las señales que requieren intervención.
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="hidden items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-xs text-slate-500 shadow-sm sm:flex">
+                <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                Actualización automática · 15 s
+              </div>
+              <Button variant="outline" size="icon" className="border-slate-200 bg-white text-slate-600 shadow-sm" onClick={handleRefresh} disabled={summaryQuery.isFetching} aria-label="Actualizar dashboard">
+                <RefreshCw className={`h-4 w-4 ${summaryQuery.isFetching ? "animate-spin" : ""}`} />
+              </Button>
+              <Button className="gap-2 bg-[#102c4b] text-white shadow-lg shadow-blue-950/10 hover:bg-[#173d64]" onClick={() => toast.info("El centro de comandos se habilitará en la próxima fase")}>
+                <Command className="h-4 w-4" />
+                Centro de comandos
+              </Button>
+            </div>
+          </header>
+
+          <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <MetricCard label="Células activas" value={`${summary?.activeAgents ?? 0}/${summary?.totalAgents ?? 0}`} detail={`${activeRatio}% del organismo operativo`} icon={Users} accent="bg-blue-600" />
+            <MetricCard label="Tareas en curso" value={summary?.runningTasks ?? 0} detail={`${summary?.pendingTasks ?? 0} pendientes de iniciar`} icon={ListTodo} accent="bg-violet-600" />
+            <MetricCard label="Alertas sin leer" value={summary?.unreadNotifications ?? 0} detail="Notificaciones que requieren revisión" icon={Bell} accent="bg-amber-500" />
+            <MetricCard label="Entradas de ADN" value={dnaEntries} detail={`${summary?.totalRules ?? 0} reglas · ${summary?.totalPolicies ?? 0} políticas`} icon={BrainCircuit} accent="bg-emerald-600" />
+          </section>
+
+          <section className="grid gap-6 xl:grid-cols-[1.55fr_1fr]">
+            <Card className="border-slate-200/80 bg-white/90 shadow-[0_12px_35px_rgba(15,32,54,0.06)]">
+              <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-3">
+                <div>
+                  <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.17em] text-slate-400"><Activity className="h-3.5 w-3.5 text-blue-500" /> Señales operativas</div>
+                  <CardTitle className="mt-2 text-xl tracking-[-0.03em] text-[#10253f]">Actividad reciente</CardTitle>
+                </div>
+                <Button variant="ghost" size="icon" className="text-slate-400" onClick={() => toast.info("La trazabilidad detallada estará disponible en su módulo")} aria-label="Más opciones"><MoreHorizontal className="h-5 w-5" /></Button>
+              </CardHeader>
+              <CardContent>
+                {recentActivity.length === 0 ? <EmptyState message="Aún no hay señales registradas en el organismo." /> : (
+                  <div className="space-y-1">
+                    {recentActivity.map((activity, index) => (
+                      <div key={activity.id} className="group flex items-start gap-3 rounded-2xl px-3 py-3 transition-colors hover:bg-slate-50">
+                        <span className={`mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ${activityColors[index % activityColors.length]}`} />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center justify-between gap-2"><p className="truncate text-sm font-medium text-slate-700">{activity.action}</p><span className="text-[11px] text-slate-400">{new Date(activity.timestamp).toLocaleString()}</span></div>
+                          <p className="mt-1 text-xs text-slate-500">{activity.entityType ?? "Sistema"}{activity.entityId ? ` · #${activity.entityId}` : ""}</p>
+                        </div>
+                        <ArrowUpRight className="mt-1 h-4 w-4 text-slate-300 opacity-0 transition-opacity group-hover:opacity-100" />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card className="overflow-hidden border-0 bg-[#102c4b] text-white shadow-[0_18px_45px_rgba(16,44,75,0.18)]">
+              <CardContent className="relative h-full p-6">
+                <div className="absolute -right-12 -top-16 h-44 w-44 rounded-full border border-white/10" />
+                <div className="absolute -bottom-20 -left-8 h-40 w-40 rounded-full border border-white/10" />
+                <div className="relative flex h-full flex-col justify-between">
+                  <div>
+                    <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.17em] text-blue-200"><Sparkles className="h-3.5 w-3.5" /> Estado del organismo</div>
+                    <h2 className="mt-3 text-2xl font-semibold tracking-[-0.04em]">Coordinación estable</h2>
+                    <p className="mt-2 max-w-sm text-sm leading-6 text-blue-100/70">Las señales del sistema se procesan con normalidad. El organismo está listo para absorber nuevas tareas.</p>
+                  </div>
+                  <div className="mt-8"><div className="mb-2 flex items-center justify-between text-xs text-blue-100/70"><span>Disponibilidad de células</span><span className="font-semibold text-white">{activeRatio}%</span></div><Progress value={activeRatio} className="h-2 bg-white/15 [&>div]:bg-emerald-400" /><div className="mt-5 flex items-center gap-2 text-xs text-blue-100/70"><ShieldCheck className="h-4 w-4 text-emerald-300" /> Sin incidentes críticos detectados</div></div>
+                </div>
+              </CardContent>
+            </Card>
+          </section>
+
+          <section>
+            <Card className="border-slate-200/80 bg-white/90 shadow-[0_12px_35px_rgba(15,32,54,0.06)]">
+              <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-3"><div><div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.17em] text-slate-400"><Bell className="h-3.5 w-3.5 text-amber-500" /> Señales que requieren atención</div><CardTitle className="mt-2 text-xl tracking-[-0.03em] text-[#10253f]">Alertas y aprobaciones</CardTitle></div><Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-700">{summary?.unreadNotifications ?? 0} sin leer</Badge></CardHeader>
+              <CardContent>{notifications.length === 0 ? <EmptyState message="Aguardando señales de atención. No hay alertas pendientes." /> : <div className="grid gap-2 lg:grid-cols-2">{notifications.map(notification => { const copy = notificationCopy[notification.type] ?? { label: "Señal del sistema", tone: "text-slate-700 bg-slate-50" }; return <div key={notification.id} className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-white px-3 py-3 shadow-sm"><div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${copy.tone}`}><Bell className="h-4 w-4" /></div><div className="min-w-0 flex-1"><div className="flex items-center gap-2"><span className="text-xs font-semibold text-slate-700">{copy.label}</span>{notification.isRead === 0 && <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />}</div><p className="mt-1 truncate text-sm text-slate-600">{notification.message}</p><p className="mt-1 text-[11px] text-slate-400">{new Date(notification.createdAt).toLocaleString()}</p></div>{notification.isRead === 0 && <Button variant="ghost" size="sm" className="shrink-0 text-xs text-[#173d64]" onClick={() => handleMarkRead(notification.id)} disabled={markNotificationRead.isPending}>Revisar</Button>}</div>; })}</div>}</CardContent>
+            </Card>
+          </section>
+
+          <section className="grid gap-6 xl:grid-cols-[1.15fr_1fr]">
+            <Card className="border-slate-200/80 bg-white/90 shadow-[0_12px_35px_rgba(15,32,54,0.06)]">
+              <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-3"><div><div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.17em] text-slate-400"><Users className="h-3.5 w-3.5 text-violet-500" /> Células agente</div><CardTitle className="mt-2 text-xl tracking-[-0.03em] text-[#10253f]">Pulso del equipo cognitivo</CardTitle></div><Button variant="outline" size="sm" className="border-slate-200 text-xs text-slate-600" onClick={() => toast.info("La gestión detallada de células se habilitará en la próxima fase")}>Ver todas</Button></CardHeader>
+              <CardContent>
+                {agents.length === 0 ? <EmptyState message="No hay células agente registradas todavía." /> : <div className="space-y-2">{agents.slice(0, 5).map(agent => { const status = statusCopy[agent.status as keyof typeof statusCopy] ?? statusCopy.inactive; return <div key={agent.id} className="flex items-center gap-3 rounded-2xl border border-transparent px-3 py-3 transition-colors hover:border-slate-100 hover:bg-slate-50"><div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#edf3fa] text-[#173d64]"><Zap className="h-4 w-4" /></div><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold text-slate-700">{agent.name}</p><p className="truncate text-xs text-slate-500">{agent.role} · {agent.organ ?? "Órgano no asignado"}</p></div><Badge variant="outline" className={status.className}>{status.label}</Badge></div>; })}</div>}
+              </CardContent>
+            </Card>
+
+            <Card className="border-slate-200/80 bg-white/90 shadow-[0_12px_35px_rgba(15,32,54,0.06)]">
+              <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-3"><div><div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.17em] text-slate-400"><ListTodo className="h-3.5 w-3.5 text-emerald-500" /> Workflows</div><CardTitle className="mt-2 text-xl tracking-[-0.03em] text-[#10253f]">Flujo de ejecución</CardTitle></div><Button variant="ghost" size="icon" className="text-slate-400" onClick={() => toast.info("El historial de workflows se habilitará en la próxima fase")} aria-label="Abrir workflows"><LayoutGrid className="h-4 w-4" /></Button></CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-4 gap-2">{[
+                  { label: "Pendientes", value: taskBreakdown.pending, icon: Clock3, color: "text-amber-600 bg-amber-50" },
+                  { label: "En curso", value: taskBreakdown.in_progress, icon: TimerReset, color: "text-blue-600 bg-blue-50" },
+                  { label: "Completadas", value: taskBreakdown.completed, icon: CheckCircle2, color: "text-emerald-600 bg-emerald-50" },
+                  { label: "Con error", value: taskBreakdown.failed, icon: TriangleAlert, color: "text-rose-600 bg-rose-50" },
+                ].map(item => <div key={item.label} className="rounded-2xl bg-slate-50 p-3 text-center"><div className={`mx-auto flex h-8 w-8 items-center justify-center rounded-xl ${item.color}`}><item.icon className="h-4 w-4" /></div><p className="mt-2 text-xl font-semibold text-[#10253f]">{item.value}</p><p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-400">{item.label}</p></div>)}</div>
+                <Separator className="my-5 bg-slate-100" />
+                {tasks.length === 0 ? <EmptyState message="No hay tareas para mostrar en este momento." /> : <div className="space-y-3">{tasks.slice(0, 3).map(task => <div key={task.id} className="flex items-center gap-3"><CircleDot className="h-4 w-4 text-blue-500" /><span className="min-w-0 flex-1 truncate text-sm text-slate-600">{task.name}</span><span className="text-xs font-medium text-slate-400">{task.status}</span></div>)}</div>}
+              </CardContent>
+            </Card>
+          </section>
+
+          <footer className="flex flex-col justify-between gap-2 border-t border-slate-200/80 pt-4 text-xs text-slate-400 sm:flex-row sm:items-center"><span className="flex items-center gap-2"><FileText className="h-3.5 w-3.5" /> ADN Organizacional conectado</span><span>Última lectura: {summaryQuery.dataUpdatedAt ? new Date(summaryQuery.dataUpdatedAt).toLocaleTimeString() : "—"}</span></footer>
+        </div>
+      </div>
+    </DashboardLayout>
+  );
+}
+
+export { Dashboard };
+  
