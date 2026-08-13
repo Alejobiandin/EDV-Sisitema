@@ -398,6 +398,78 @@ export async function deleteTask(id: number): Promise<boolean> {
   return result[0].affectedRows > 0;
 }
 
+export async function approveTask(taskId: number, userId: number, comment?: string): Promise<Task | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const task = await getTask(taskId);
+  if (!task || task.status !== "pending_approval" || task.approvalStatus !== "pending") {
+    throw new Error("La tarea no está disponible para aprobación humana");
+  }
+
+  await db.update(tasks).set({
+    status: "completed",
+    approvalStatus: "approved",
+    approvedAt: new Date(),
+    approvedBy: userId,
+    approvalComment: comment ?? null,
+  }).where(eq(tasks.id, taskId));
+
+  await db.insert(auditLog).values({
+    agentId: task.assignedAgentId,
+    userId,
+    action: "Aprobación humana de tarea",
+    entityType: "task",
+    entityId: taskId,
+    details: JSON.stringify({ decision: "approved", comment: comment ?? null }),
+  });
+
+  await db.insert(notifications).values({
+    userId,
+    agentId: task.assignedAgentId,
+    type: "task_completed",
+    message: `La tarea ${task.name} fue aprobada y finalizó su ejecución.`,
+    isRead: 0,
+  });
+
+  return getTask(taskId);
+}
+
+export async function rejectTask(taskId: number, userId: number, comment: string): Promise<Task | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const task = await getTask(taskId);
+  if (!task || task.status !== "pending_approval" || task.approvalStatus !== "pending") {
+    throw new Error("La tarea no está disponible para rechazo humano");
+  }
+
+  await db.update(tasks).set({
+    status: "rejected",
+    approvalStatus: "rejected",
+    approvedAt: new Date(),
+    approvedBy: userId,
+    approvalComment: comment,
+  }).where(eq(tasks.id, taskId));
+
+  await db.insert(auditLog).values({
+    agentId: task.assignedAgentId,
+    userId,
+    action: "Rechazo humano de tarea",
+    entityType: "task",
+    entityId: taskId,
+    details: JSON.stringify({ decision: "rejected", comment }),
+  });
+
+  await db.insert(notifications).values({
+    userId,
+    agentId: task.assignedAgentId,
+    type: "system_alert",
+    message: `La tarea ${task.name} fue rechazada por revisión humana.`,
+    isRead: 0,
+  });
+
+  return getTask(taskId);
+}
+
 export async function listTasks(status?: string, assignedAgentId?: number): Promise<Task[]> {
   const db = await getDb();
   if (!db) return [];

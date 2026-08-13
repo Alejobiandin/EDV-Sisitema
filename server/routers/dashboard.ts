@@ -12,6 +12,9 @@ export const dashboardRouter = router({
         totalAgents: 0,
         runningTasks: 0,
         pendingTasks: 0,
+        approvalTasks: 0,
+        approvedTasks: 0,
+        rejectedTasks: 0,
         unreadNotifications: 0,
         totalRules: 0,
         totalPolicies: 0,
@@ -19,6 +22,7 @@ export const dashboardRouter = router({
         notificationsList: [],
         agentsList: [],
         tasksList: [],
+        approvalTasksList: [],
       };
     }
 
@@ -29,6 +33,9 @@ export const dashboardRouter = router({
     const allTasks = await db.select().from(tasks);
     const runningTasks = allTasks.filter(t => t.status === 'in_progress').length;
     const pendingTasks = allTasks.filter(t => t.status === 'pending').length;
+    const approvalTasks = allTasks.filter(t => t.status === 'pending_approval').length;
+    const approvedTasks = allTasks.filter(t => t.approvalStatus === 'approved').length;
+    const rejectedTasks = allTasks.filter(t => t.approvalStatus === 'rejected').length;
 
     const unreadNotifs = await db.select().from(notifications).where(eq(notifications.isRead, 0));
     const unreadNotifications = unreadNotifs.length;
@@ -38,12 +45,16 @@ export const dashboardRouter = router({
     const policies = await db.select().from(organizationalDnaPolicies);
 
     const recentActivity = await db.select().from(auditLog).orderBy(sql`${auditLog.timestamp} DESC`).limit(10);
+    const approvalTasksList = await db.select().from(tasks).where(eq(tasks.status, 'pending_approval')).orderBy(sql`${tasks.createdAt} DESC`);
 
     return {
       activeAgents,
       totalAgents,
       runningTasks,
       pendingTasks,
+      approvalTasks,
+      approvedTasks,
+      rejectedTasks,
       unreadNotifications,
       totalRules: rules.length,
       totalPolicies: policies.length,
@@ -51,6 +62,7 @@ export const dashboardRouter = router({
       notificationsList,
       agentsList: allAgents,
       tasksList: allTasks.slice(0, 10),
+      approvalTasksList,
     };
   }),
 });

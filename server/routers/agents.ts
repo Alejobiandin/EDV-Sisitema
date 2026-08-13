@@ -53,4 +53,28 @@ export const agentsRouter = router({
     .query(async ({ input }) => {
       return listAgentMetrics(input?.agentId, input?.metricName);
     }),
+
+  executeTask: protectedProcedure
+    .input(z.object({
+      agentId: z.number(),
+      taskType: z.enum(["tax_computation", "payroll_liquidation", "social_charges", "accounting_review"]),
+      payload: z.object({
+        clientName: z.string().optional(),
+        period: z.string().optional(),
+        grossSales: z.number().optional(),
+        vatPurchases: z.number().optional(),
+        baseSalary: z.number().optional(),
+        overtimeHours: z.number().optional(),
+        cctName: z.string().optional(),
+      }).passthrough(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { executeCognitiveAgentTask } = await import("../agentEngine");
+      return executeCognitiveAgentTask({
+        agentId: input.agentId,
+        taskType: input.taskType,
+        payload: input.payload,
+        userId: ctx.user.id,
+      });
+    }),
 });

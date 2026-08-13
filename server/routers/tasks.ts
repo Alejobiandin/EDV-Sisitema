@@ -1,5 +1,5 @@
 import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
-import { createTask, getTask, updateTask, deleteTask, listTasks, listTaskExecutions } from "../db";
+import { createTask, getTask, updateTask, deleteTask, listTasks, listTaskExecutions, approveTask, rejectTask } from "../db";
 import { z } from "zod";
 
 export const tasksRouter = router({
@@ -7,7 +7,7 @@ export const tasksRouter = router({
     .input(z.object({
       name: z.string().min(1),
       description: z.string().optional(),
-      status: z.enum(["pending", "in_progress", "completed", "failed", "cancelled"]).optional(),
+      status: z.enum(["pending", "in_progress", "pending_approval", "completed", "rejected", "failed", "cancelled"]).optional(),
       workflowId: z.number().optional(),
       assignedAgentId: z.number().optional(),
     }))
@@ -24,7 +24,7 @@ export const tasksRouter = router({
       id: z.number(),
       name: z.string().min(1).optional(),
       description: z.string().optional(),
-      status: z.enum(["pending", "in_progress", "completed", "failed", "cancelled"]).optional(),
+      status: z.enum(["pending", "in_progress", "pending_approval", "completed", "rejected", "failed", "cancelled"]).optional(),
       workflowId: z.number().optional(),
       assignedAgentId: z.number().optional(),
     }))
@@ -49,5 +49,23 @@ export const tasksRouter = router({
     .input(z.object({ taskId: z.number() }))
     .query(async ({ input }) => {
       return listTaskExecutions(input.taskId);
+    }),
+
+  approve: protectedProcedure
+    .input(z.object({
+      taskId: z.number(),
+      comment: z.string().max(1000).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      return approveTask(input.taskId, ctx.user.id, input.comment);
+    }),
+
+  reject: protectedProcedure
+    .input(z.object({
+      taskId: z.number(),
+      comment: z.string().min(3).max(1000),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      return rejectTask(input.taskId, ctx.user.id, input.comment);
     }),
 });
