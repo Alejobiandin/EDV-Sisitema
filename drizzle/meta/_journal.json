@@ -15,6 +15,13 @@
       "when": 1786676419900,
       "tag": "0001_bizarre_bloodscream",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1786715878826,
+      "tag": "0002_tense_secret_warriors",
+      "breakpoints": true
     }
   ]
 }

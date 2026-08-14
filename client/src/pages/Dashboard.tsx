@@ -29,6 +29,7 @@ import {
   Users,
   XCircle,
   Zap,
+  BarChart3,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -127,6 +128,62 @@ function downloadBase64File(file: { dataBase64: string; contentType: string; fil
 function ReportExportActions({ taskId, taskType, onExport, disabled }: { taskId: number; taskType?: string; onExport: (taskId: number, format: "pdf" | "xlsx") => void; disabled: boolean }) {
   if (taskType !== "tax_computation" && taskType !== "payroll_liquidation") return null;
   return <div className="flex shrink-0 items-center gap-1.5"><Button variant="outline" size="sm" className="h-8 gap-1 border-slate-200 bg-white px-2 text-[11px] text-slate-600 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700" onClick={() => onExport(taskId, "pdf")} disabled={disabled} title="Descargar PDF"><Download className="h-3.5 w-3.5" /> PDF</Button><Button variant="outline" size="sm" className="h-8 gap-1 border-slate-200 bg-white px-2 text-[11px] text-emerald-700 hover:border-emerald-200 hover:bg-emerald-50" onClick={() => onExport(taskId, "xlsx")} disabled={disabled} title="Descargar Excel"><FileSpreadsheet className="h-3.5 w-3.5" /> Excel</Button></div>;
+}
+
+type ProfitabilityRow = {
+  clientId: number;
+  clientName: string;
+  taxCategory: string;
+  totalBilled: number;
+  estimatedCost: number;
+  margin: number;
+  invoicesCount: number;
+};
+
+export function getProfitabilityChartRows(data: ProfitabilityRow[], metric: "margin" | "totalBilled") {
+  return [...data].sort((a, b) => b[metric] - a[metric]);
+}
+
+function ProfitabilityChart({ data }: { data: ProfitabilityRow[] }) {
+  const [metric, setMetric] = useState<"margin" | "totalBilled">("margin");
+  const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
+  const sorted = getProfitabilityChartRows(data, metric);
+  const maxValue = Math.max(...sorted.map(row => row[metric]), 1);
+  const selected = sorted.find(row => row.clientId === selectedClientId) ?? sorted[0];
+
+  return <Card className="border-emerald-200/80 bg-white/95 shadow-[0_12px_35px_rgba(15,32,54,0.06)]">
+    <CardHeader className="flex flex-col gap-3 pb-3 sm:flex-row sm:items-start sm:justify-between">
+      <div>
+        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.17em] text-emerald-600"><BarChart3 className="h-3.5 w-3.5" /> Rentabilidad por cliente</div>
+        <CardTitle className="mt-2 text-xl tracking-[-0.03em] text-[#10253f]">Quién aporta más margen a EDV</CardTitle>
+        <p className="mt-1 text-sm text-slate-500">Comparativa basada en honorarios facturados y costo operativo estimado de las células.</p>
+      </div>
+      <div className="flex shrink-0 rounded-lg border border-slate-200 bg-slate-50 p-1 text-xs">
+        <button type="button" onClick={() => setMetric("margin")} className={`rounded-md px-3 py-1.5 font-semibold transition ${metric === "margin" ? "bg-white text-emerald-700 shadow-sm" : "text-slate-500"}`}>Margen</button>
+        <button type="button" onClick={() => setMetric("totalBilled")} className={`rounded-md px-3 py-1.5 font-semibold transition ${metric === "totalBilled" ? "bg-white text-blue-700 shadow-sm" : "text-slate-500"}`}>Facturado</button>
+      </div>
+    </CardHeader>
+    <CardContent>
+      {sorted.length === 0 ? <EmptyState message="Todavía no hay facturas asociadas a clientes para calcular rentabilidad." /> : <div className="grid gap-5 lg:grid-cols-[1fr_260px]">
+        <div className="space-y-3" role="list" aria-label="Rentabilidad comparada por cliente">
+          {sorted.slice(0, 8).map(row => {
+            const percentage = Math.max((row[metric] / maxValue) * 100, row[metric] > 0 ? 3 : 0);
+            const isSelected = selected?.clientId === row.clientId;
+            return <button type="button" key={row.clientId} onClick={() => setSelectedClientId(row.clientId)} className={`group w-full rounded-xl p-2 text-left transition ${isSelected ? "bg-emerald-50" : "hover:bg-slate-50"}`} title={`${row.clientName}: $${row[metric].toLocaleString("es-AR")}`}>
+              <div className="mb-1 flex items-center justify-between gap-3 text-xs"><span className="max-w-[55%] truncate font-semibold text-slate-700">{row.clientName}</span><span className="font-semibold text-slate-500">${row[metric].toLocaleString("es-AR", { maximumFractionDigits: 0 })}</span></div>
+              <div className="h-3 overflow-hidden rounded-full bg-slate-100"><div className={`h-full rounded-full transition-all duration-300 ${metric === "margin" ? "bg-gradient-to-r from-emerald-400 to-emerald-600" : "bg-gradient-to-r from-blue-400 to-blue-600"}`} style={{ width: `${percentage}%` }} /></div>
+            </button>;
+          })}
+        </div>
+        {selected && <div className="rounded-2xl border border-slate-100 bg-slate-50/80 p-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.15em] text-slate-400">Cliente seleccionado</p>
+          <p className="mt-2 truncate text-lg font-semibold text-[#102c4b]">{selected.clientName}</p>
+          <p className="mt-1 text-xs text-slate-500">{selected.taxCategory}</p>
+          <div className="mt-5 space-y-3 text-sm"><div className="flex justify-between"><span className="text-slate-500">Facturado</span><strong>${selected.totalBilled.toLocaleString("es-AR")}</strong></div><div className="flex justify-between"><span className="text-slate-500">Costo estimado</span><strong className="text-rose-600">-${selected.estimatedCost.toLocaleString("es-AR")}</strong></div><Separator /><div className="flex justify-between"><span className="font-semibold text-slate-700">Margen</span><strong className="text-emerald-700">${selected.margin.toLocaleString("es-AR")}</strong></div><div className="flex justify-between text-xs"><span className="text-slate-400">Comprobantes</span><span className="font-semibold text-slate-600">{selected.invoicesCount}</span></div></div>
+        </div>}
+      </div>}
+    </CardContent>
+  </Card>;
 }
 
 export default function Dashboard() {
@@ -233,6 +290,8 @@ export default function Dashboard() {
         <header className="flex flex-col justify-between gap-5 pt-2 lg:flex-row lg:items-end"><div><div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-blue-600"><span className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" /> EDV · Sistema Organizacional Cognitivo</div><h1 className="text-3xl font-semibold tracking-[-0.045em] text-[#10253f] sm:text-4xl">Centro de Mando EDV</h1><p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">Arquitectura multiagente con motor determinístico Python y memoria institucional para estudios contables.</p></div><div className="flex items-center gap-2"><div className="hidden items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-xs text-slate-500 shadow-sm sm:flex"><span className="h-2 w-2 rounded-full bg-emerald-500" /> Actualización automática · 15 s</div><Button variant="outline" size="icon" className="border-slate-200 bg-white text-slate-600 shadow-sm" onClick={handleRefresh} disabled={summaryQuery.isFetching} aria-label="Actualizar dashboard"><RefreshCw className={`h-4 w-4 ${summaryQuery.isFetching ? "animate-spin" : ""}`} /></Button><Button className="gap-2 bg-[#102c4b] text-white shadow-lg shadow-blue-950/10 hover:bg-[#173d64]" onClick={() => toast.info("Usa el panel de ejecución para enviar una tarea a una célula") }><Command className="h-4 w-4" /> Centro de comandos</Button></div></header>
 
         <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"><MetricCard label="Células activas" value={`${summary?.activeAgents ?? 0}/${summary?.totalAgents ?? 0}`} detail={`${activeRatio}% del organismo operativo`} icon={Users} accent="bg-blue-600" /><MetricCard label="Tareas en curso" value={summary?.runningTasks ?? 0} detail={`${summary?.approvalTasks ?? 0} esperan aprobación`} icon={ListTodo} accent="bg-violet-600" /><MetricCard label="Alertas sin leer" value={summary?.unreadNotifications ?? 0} detail="Notificaciones que requieren revisión" icon={Bell} accent="bg-amber-500" /><MetricCard label="Entradas de ADN" value={dnaEntries} detail={`${summary?.totalRules ?? 0} reglas · ${summary?.totalPolicies ?? 0} políticas`} icon={BrainCircuit} accent="bg-emerald-600" /></section>
+
+        <ProfitabilityChart data={summary?.clientProfitability ?? []} />
 
         <section className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]"><Card className="border-blue-200/80 bg-white/95 shadow-[0_12px_35px_rgba(15,32,54,0.08)]"><CardHeader className="pb-3"><div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.17em] text-blue-600"><Zap className="h-3.5 w-3.5" /> Orquestador de tareas</div><CardTitle className="mt-2 text-xl tracking-[-0.03em] text-[#10253f]">Enviar una tarea a una célula</CardTitle><p className="text-sm leading-6 text-slate-500">El cálculo determinístico se ejecuta primero; el razonamiento cognitivo agrega contexto del ADN Organizacional y detiene los casos de alto riesgo.</p></CardHeader><CardContent className="space-y-4"><div className="grid gap-3 sm:grid-cols-2"><label className="space-y-1.5 text-xs font-semibold text-slate-600">Célula agente<select value={selectedAgentId ?? ""} onChange={event => setSelectedAgentId(Number(event.target.value))} className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-normal text-slate-700 outline-none ring-blue-200 transition focus:ring-2"><option value="" disabled>Seleccionar célula</option>{agents.map(agent => <option key={agent.id} value={agent.id}>{agent.name} · {agent.organ ?? "Órgano"}</option>)}</select></label><label className="space-y-1.5 text-xs font-semibold text-slate-600">Tipo de tarea<select value={taskType} onChange={event => setTaskType(event.target.value as AgentTaskType)} className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-normal text-slate-700 outline-none ring-blue-200 transition focus:ring-2">{Object.entries(taskTypeCopy).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label></div><div className="grid gap-3 sm:grid-cols-2"><label className="space-y-1.5 text-xs font-semibold text-slate-600">Cliente precargado<select value={selectedClientId ?? ""} onChange={event => setSelectedClientId(Number(event.target.value))} className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-normal text-slate-700 outline-none ring-blue-200 transition focus:ring-2"><option value="">Cliente demostración</option>{clientsQuery.data?.map(client => <option key={client.id} value={client.id}>{client.name} · {client.taxId}</option>)}</select></label><label className="space-y-1.5 text-xs font-semibold text-slate-600">Período<input value={period} onChange={event => setPeriod(event.target.value)} className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-normal text-slate-700 outline-none ring-blue-200 transition focus:ring-2" /></label></div>{taskType !== "tax_computation" && <div className="grid gap-3 sm:grid-cols-2"><label className="space-y-1.5 text-xs font-semibold text-slate-600">Empleado precargado<select value={selectedEmployeeId ?? ""} onChange={event => setSelectedEmployeeId(Number(event.target.value))} className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-normal text-slate-700 outline-none ring-blue-200 transition focus:ring-2"><option value="">Liquidación manual</option>{employeesQuery.data?.map(employee => <option key={employee.id} value={employee.id}>{employee.fullName} · ${Number(employee.baseSalary).toLocaleString("es-AR")}</option>)}</select></label><label className="space-y-1.5 text-xs font-semibold text-slate-600">Cliente / entidad<input value={clientName} onChange={event => setClientName(event.target.value)} className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-normal text-slate-700 outline-none ring-blue-200 transition focus:ring-2" /></label></div>}{taskType === "tax_computation" ? <div className="grid gap-3 sm:grid-cols-2"><label className="space-y-1.5 text-xs font-semibold text-slate-600">Ventas gravadas<input type="number" value={grossSales} onChange={event => setGrossSales(event.target.value)} className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-normal text-slate-700 outline-none ring-blue-200 transition focus:ring-2" /></label><label className="space-y-1.5 text-xs font-semibold text-slate-600">Compras con crédito fiscal<input type="number" value={vatPurchases} onChange={event => setVatPurchases(event.target.value)} className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-normal text-slate-700 outline-none ring-blue-200 transition focus:ring-2" /></label></div> : <div className="grid gap-3 sm:grid-cols-2"><label className="space-y-1.5 text-xs font-semibold text-slate-600">Sueldo base<input type="number" value={baseSalary} onChange={event => setBaseSalary(event.target.value)} className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-normal text-slate-700 outline-none ring-blue-200 transition focus:ring-2" /></label><label className="space-y-1.5 text-xs font-semibold text-slate-600">Horas suplementarias<input type="number" value={overtimeHours} onChange={event => setOvertimeHours(event.target.value)} className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-normal text-slate-700 outline-none ring-blue-200 transition focus:ring-2" /></label></div>}<div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-[#f2f6fb] p-3 text-xs text-slate-500"><span>El ejemplo fiscal supera deliberadamente el umbral de revisión para demostrar HITL.</span><Button className="bg-[#102c4b] text-white hover:bg-[#173d64]" onClick={handleExecute} disabled={executeTask.isPending || agents.length === 0}>{executeTask.isPending ? "Procesando célula…" : "Ejecutar tarea"}</Button></div></CardContent></Card><Card className="overflow-hidden border-0 bg-[#102c4b] text-white shadow-[0_18px_45px_rgba(16,44,75,0.18)]"><CardContent className="relative h-full p-6"><div className="absolute -right-12 -top-16 h-44 w-44 rounded-full border border-white/10" /><div className="absolute -bottom-20 -left-8 h-40 w-40 rounded-full border border-white/10" /><div className="relative flex h-full flex-col justify-between"><div><div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.17em] text-blue-200"><Sparkles className="h-3.5 w-3.5" /> Estado del organismo</div><h2 className="mt-3 text-2xl font-semibold tracking-[-0.04em]">Coordinación estable</h2><p className="mt-2 max-w-sm text-sm leading-6 text-blue-100/70">Las células ejecutan cálculos determinísticos, consultan la memoria institucional y elevan las decisiones sensibles a una persona responsable.</p></div><div className="mt-8"><div className="mb-2 flex items-center justify-between text-xs text-blue-100/70"><span>Disponibilidad de células</span><span className="font-semibold text-white">{activeRatio}%</span></div><Progress value={activeRatio} className="h-2 bg-white/15 [&>div]:bg-emerald-400" /><div className="mt-5 flex items-center gap-2 text-xs text-blue-100/70"><ShieldCheck className="h-4 w-4 text-emerald-300" /> Riesgo humano contenido por aprobación explícita</div></div></div></CardContent></Card></section>
 

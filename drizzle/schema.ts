@@ -197,6 +197,7 @@ export const edvClients = mysqlTable("edv_clients", {
   name: varchar("name", { length: 255 }).notNull(),
   taxId: varchar("taxId", { length: 50 }).notNull().unique(),
   taxCategory: varchar("taxCategory", { length: 100 }).notNull(), // Responsable Inscripto, Monotributo, etc.
+  operatingCostRate: decimal("operatingCostRate", { precision: 5, scale: 4 }).default("0.3500").notNull(),
   email: varchar("email", { length: 255 }),
   phone: varchar("phone", { length: 50 }),
   status: mysqlEnum("status", ["active", "suspended", "archived"]).default("active").notNull(),

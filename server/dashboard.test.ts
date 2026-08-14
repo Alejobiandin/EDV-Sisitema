@@ -35,6 +35,7 @@ describe("dashboard.summary", () => {
       unreadNotifications: 0,
       totalRules: 0,
       totalPolicies: 0,
+      clientProfitability: [],
       recentActivity: [],
       notificationsList: [],
       agentsList: [],

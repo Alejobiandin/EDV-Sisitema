@@ -28,3 +28,9 @@
 - [x] Añadir prueba Vitest para verificar que executeCognitiveAgentTask rechaza IDs inválidos de clientes y empleados
 - [x] Añadir prueba Vitest para verificar que executeCognitiveAgentTask rechaza employeeId inválidos
 - [x] Ejecutar pnpm check && pnpm test para validar el nuevo test de employeeId inválido
+- [x] Añadir gráfico interactivo de rentabilidad por cliente al panel principal, conectado a facturas persistidas y con pruebas
+- [x] Agregar prueba Vitest de agregación de rentabilidad con clientes y facturas persistidas
+- [x] Agregar prueba Vitest para ordenamiento, cambio de métrica y estado vacío del gráfico de rentabilidad
+- [x] Ajustar el cálculo de rentabilidad para soportar costos operativos diferenciados y probar órdenes distintos entre margen y facturación
+- [x] Conectar costos operativos diferenciados a una fuente persistida de EDV para el cálculo real del dashboard
+- [x] Agregar prueba Vitest de dashboard.summary con costos diferenciados en la ruta real

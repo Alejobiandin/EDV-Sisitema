@@ -1,7 +1,8 @@
 import { publicProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
-import { agents, agentMetrics, tasks, notifications, auditLog, organizationalDnaRules, organizationalDnaPolicies } from "../../drizzle/schema";
+import { agents, agentMetrics, tasks, notifications, auditLog, organizationalDnaRules, organizationalDnaPolicies, edvClients, edvInvoices } from "../../drizzle/schema";
 import { count, eq, sql } from "drizzle-orm";
+import { buildClientProfitability } from "../profitability";
 
 export const dashboardRouter = router({
   summary: publicProcedure.query(async () => {
@@ -18,6 +19,7 @@ export const dashboardRouter = router({
         unreadNotifications: 0,
         totalRules: 0,
         totalPolicies: 0,
+        clientProfitability: [],
         recentActivity: [],
         notificationsList: [],
         agentsList: [],
@@ -47,7 +49,16 @@ export const dashboardRouter = router({
     const recentActivity = await db.select().from(auditLog).orderBy(sql`${auditLog.timestamp} DESC`).limit(10);
     const approvalTasksList = await db.select().from(tasks).where(eq(tasks.status, 'pending_approval')).orderBy(sql`${tasks.createdAt} DESC`);
 
+    const clients = await db.select().from(edvClients);
+    const invoices = await db.select().from(edvInvoices);
+
+    const clientOperatingCostRates = Object.fromEntries(
+      clients.map(client => [client.id, Number(client.operatingCostRate)]),
+    );
+    const clientProfitability = buildClientProfitability(clients, invoices, 0.35, clientOperatingCostRates);
+
     return {
+      clientProfitability,
       activeAgents,
       totalAgents,
       runningTasks,
