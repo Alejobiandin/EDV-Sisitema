@@ -12,10 +12,17 @@ import { trpc } from "@/lib/trpc";
 const taxCategories = ["Responsable Inscripto", "Monotributo", "Exento", "Consumidor Final"];
 
 export default function ClientRegistry() {
-  const clientsQuery = trpc.edvManagement.listClients.useQuery();
+  const [clientSearch, setClientSearch] = useState("");
+  const [clientCategoryFilter, setClientCategoryFilter] = useState("all");
+  const [employeeSearch, setEmployeeSearch] = useState("");
+
+  const clientsQuery = trpc.edvManagement.listClients.useQuery({
+    search: clientSearch || undefined,
+    category: clientCategoryFilter,
+  });
   const [selectedClientId, setSelectedClientId] = useState<number | undefined>();
   const employeesQuery = trpc.edvManagement.listEmployees.useQuery(
-    selectedClientId ? { clientId: selectedClientId } : undefined,
+    { clientId: selectedClientId, search: employeeSearch || undefined },
     { enabled: Boolean(selectedClientId) },
   );
   const utils = trpc.useUtils();
@@ -121,11 +128,59 @@ export default function ClientRegistry() {
                 } catch(e) { toast.error("Error importando clientes"); }
               }} className="w-full bg-emerald-700 text-white hover:bg-emerald-800">{bulkImportClients.isPending ? "Procesando…" : "Procesar clientes CSV"}</Button></CardContent></Card>
             </div>
-            <Card className="border-slate-200/80 bg-white/95 shadow-sm"><CardHeader><CardTitle className="text-xl">Padrón de clientes</CardTitle><p className="text-sm text-slate-500">Selecciona un cliente para precargar su información en las próximas declaraciones.</p></CardHeader><CardContent><div className="space-y-2">{clientsQuery.data?.length ? clientsQuery.data.map(client => <button type="button" key={client.id} onClick={() => setSelectedClientId(client.id)} className={`flex w-full items-center gap-3 rounded-xl border p-3 text-left transition ${selectedClientId === client.id ? "border-blue-300 bg-blue-50/70" : "border-slate-100 bg-white hover:bg-slate-50"}`}><div className="rounded-xl bg-slate-100 p-2 text-slate-600"><BriefcaseBusiness className="h-4 w-4" /></div><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold text-slate-700">{client.name}</p><p className="mt-1 text-xs text-slate-500">{client.taxId} · {client.taxCategory}</p></div><Badge variant="outline" className="border-emerald-200 text-emerald-700">{client.status === "active" ? "Activo" : client.status}</Badge></button>) : <div className="rounded-2xl border border-dashed border-slate-200 p-10 text-center text-sm text-slate-500">Aún no hay clientes cargados. Incorpora el primero desde el formulario.</div>}</div></CardContent></Card>
+            <Card className="border-slate-200/80 bg-white/95 shadow-sm">
+              <CardHeader>
+                <div className="flex flex-col gap-3">
+                  <CardTitle className="text-xl">Padrón de clientes</CardTitle>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <Input placeholder="Buscar por nombre o CUIT..." value={clientSearch} onChange={e => setClientSearch(e.target.value)} />
+                    <select value={clientCategoryFilter} onChange={e => setClientCategoryFilter(e.target.value)} className="h-10 rounded-md border border-input bg-background px-3 text-sm">
+                      <option value="all">Todas las condiciones</option>
+                      {taxCategories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                    </select>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2 max-h-[420px] overflow-y-auto pr-1">
+                  {clientsQuery.data?.length ? clientsQuery.data.map(client => (
+                    <button type="button" key={client.id} onClick={() => setSelectedClientId(client.id)} className={`flex w-full items-center gap-3 rounded-xl border p-3 text-left transition ${selectedClientId === client.id ? "border-blue-300 bg-blue-50/70" : "border-slate-100 bg-white hover:bg-slate-50"}`}>
+                      <div className="rounded-xl bg-slate-100 p-2 text-slate-600"><BriefcaseBusiness className="h-4 w-4" /></div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold text-slate-700">{client.name}</p>
+                        <p className="mt-1 text-xs text-slate-500">{client.taxId} · {client.taxCategory}</p>
+                      </div>
+                      <Badge variant="outline" className="border-emerald-200 text-emerald-700">{client.status === "active" ? "Activo" : client.status}</Badge>
+                    </button>
+                  )) : <div className="rounded-2xl border border-dashed border-slate-200 p-10 text-center text-sm text-slate-500">No se encontraron clientes con los filtros aplicados.</div>}
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
           <TabsContent value="employees" className="grid gap-6 xl:grid-cols-[0.8fr_1.2fr]">
             <div className="space-y-6"><Card className="border-violet-100 bg-white/95 shadow-sm"><CardHeader><div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.17em] text-violet-600"><UserRound className="h-3.5 w-3.5" /> Alta individual</div><CardTitle className="mt-2 text-xl">Nuevo empleado</CardTitle><p className="text-sm text-slate-500">Cliente seleccionado: {selectedClient?.name ?? "ninguno"}</p></CardHeader><CardContent><form onSubmit={handleCreateEmployee} className="space-y-3"><label className="block text-xs font-semibold text-slate-600">Nombre completo<Input required value={employeeName} onChange={e => setEmployeeName(e.target.value)} className="mt-1.5" /></label><label className="block text-xs font-semibold text-slate-600">CUIL / identificación laboral<Input required value={employeeTaxId} onChange={e => setEmployeeTaxId(e.target.value)} className="mt-1.5" /></label><div className="grid gap-3 sm:grid-cols-2"><label className="block text-xs font-semibold text-slate-600">Sueldo básico<Input required type="number" min="0" value={employeeSalary} onChange={e => setEmployeeSalary(e.target.value)} className="mt-1.5" /></label><label className="block text-xs font-semibold text-slate-600">Convenio CCT<Input value={employeeCct} onChange={e => setEmployeeCct(e.target.value)} className="mt-1.5" placeholder="Comercio General" /></label></div><Button type="submit" className="w-full bg-[#102c4b] hover:bg-[#173d64]" disabled={createEmployee.isPending || !selectedClientId}>{createEmployee.isPending ? "Guardando…" : "Incorporar empleado"}</Button></form></CardContent></Card><Card className="border-emerald-100 bg-emerald-50/40 shadow-sm"><CardHeader><div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.17em] text-emerald-700"><FileSpreadsheet className="h-3.5 w-3.5" /> Importación masiva</div><CardTitle className="mt-2 text-xl">Cargar nómina CSV</CardTitle><p className="text-sm leading-6 text-slate-600">Formato: <strong>Nombre Completo, CUIL/CUIT, Sueldo Básico, CCT</strong>. La primera fila puede contener encabezados.</p></CardHeader><CardContent className="space-y-3"><input ref={fileInputRef} type="file" accept=".csv,text/csv" onChange={handleFile} className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-emerald-600 file:px-3 file:py-2 file:text-sm file:font-medium file:text-white" /><textarea value={csvText} onChange={e => setCsvText(e.target.value)} placeholder="Ana Pérez, 20-12345678-9, 850000, Comercio General" className="min-h-28 w-full rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-700 outline-none ring-emerald-200 focus:ring-2" /><div className="flex flex-wrap items-center justify-between gap-3"><Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} className="gap-2"><Upload className="h-4 w-4" /> Seleccionar CSV</Button><Button type="button" onClick={handleBulkImport} disabled={bulkImport.isPending || !selectedClientId} className="bg-emerald-700 text-white hover:bg-emerald-800">{bulkImport.isPending ? "Procesando…" : "Procesar nómina"}</Button></div>{importSummary && <div className="rounded-xl bg-white p-3 text-sm text-slate-600"><strong>Resultado:</strong> {importSummary.importedCount} incorporados · {importSummary.errorsCount} con error</div>}</CardContent></Card></div>
-            <Card className="border-slate-200/80 bg-white/95 shadow-sm"><CardHeader><CardTitle className="text-xl">Nómina de {selectedClient?.name ?? "cliente seleccionado"}</CardTitle><p className="text-sm text-slate-500">Estos empleados estarán disponibles para liquidaciones y cargas sociales de EDV.</p></CardHeader><CardContent><div className="space-y-2">{employeesQuery.data?.length ? employeesQuery.data.map(employee => <div key={employee.id} className="flex items-center gap-3 rounded-xl border border-slate-100 bg-white p-3"><div className="rounded-xl bg-violet-50 p-2 text-violet-700"><UserRound className="h-4 w-4" /></div><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold text-slate-700">{employee.fullName}</p><p className="mt-1 text-xs text-slate-500">{employee.taxIdNumber} · CCT: {employee.cct ?? "Sin convenio"}</p></div><p className="text-sm font-semibold text-slate-700">${Number(employee.baseSalary).toLocaleString("es-AR")}</p></div>) : <div className="rounded-2xl border border-dashed border-slate-200 p-10 text-center text-sm text-slate-500">Selecciona un cliente con nómina o incorpora empleados mediante el formulario.</div>}</div></CardContent></Card>
+            <Card className="border-slate-200/80 bg-white/95 shadow-sm">
+              <CardHeader>
+                <div className="flex flex-col gap-3">
+                  <CardTitle className="text-xl">Nómina de {selectedClient?.name ?? "cliente seleccionado"}</CardTitle>
+                  <Input placeholder="Buscar por empleado, CUIL o CCT..." value={employeeSearch} onChange={e => setEmployeeSearch(e.target.value)} />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2 max-h-[420px] overflow-y-auto pr-1">
+                  {employeesQuery.data?.length ? employeesQuery.data.map(employee => (
+                    <div key={employee.id} className="flex items-center gap-3 rounded-xl border border-slate-100 bg-white p-3">
+                      <div className="rounded-xl bg-violet-50 p-2 text-violet-700"><UserRound className="h-4 w-4" /></div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold text-slate-700">{employee.fullName}</p>
+                        <p className="mt-1 text-xs text-slate-500">{employee.taxIdNumber} · CCT: {employee.cct ?? "Sin convenio"}</p>
+                      </div>
+                      <p className="text-sm font-semibold text-slate-700">${Number(employee.baseSalary).toLocaleString("es-AR")}</p>
+                    </div>
+                  )) : <div className="rounded-2xl border border-dashed border-slate-200 p-10 text-center text-sm text-slate-500">No se encontraron empleados con los filtros aplicados.</div>}
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>

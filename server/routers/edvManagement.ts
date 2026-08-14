@@ -62,11 +62,19 @@ export function parseClientCsv(csvContent: string) {
 }
 
 export const edvManagementRouter = router({
-  listClients: protectedProcedure.query(async () => {
-    const db = await getDb();
-    if (!db) return [];
-    return db.select().from(edvClients).orderBy(desc(edvClients.createdAt));
-  }),
+  listClients: protectedProcedure
+    .input(z.object({ search: z.string().optional(), category: z.string().optional() }).optional())
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) return [];
+      let query = db.select().from(edvClients);
+      const list = await query.orderBy(desc(edvClients.createdAt));
+      return list.filter(client => {
+        const matchesSearch = !input?.search || client.name.toLowerCase().includes(input.search.toLowerCase()) || client.taxId.toLowerCase().includes(input.search.toLowerCase());
+        const matchesCategory = !input?.category || input.category === "all" || client.taxCategory === input.category;
+        return matchesSearch && matchesCategory;
+      });
+    }),
 
   createClient: protectedProcedure
     .input(
@@ -127,14 +135,18 @@ export const edvManagementRouter = router({
     }),
 
   listEmployees: protectedProcedure
-    .input(z.object({ clientId: z.number().optional() }).optional())
+    .input(z.object({ clientId: z.number().optional(), search: z.string().optional() }).optional())
     .query(async ({ input }) => {
       const db = await getDb();
       if (!db) return [];
-      if (input?.clientId) {
-        return db.select().from(edvEmployees).where(eq(edvEmployees.clientId, input.clientId)).orderBy(desc(edvEmployees.createdAt));
-      }
-      return db.select().from(edvEmployees).orderBy(desc(edvEmployees.createdAt));
+      let baseList = input?.clientId
+        ? await db.select().from(edvEmployees).where(eq(edvEmployees.clientId, input.clientId)).orderBy(desc(edvEmployees.createdAt))
+        : await db.select().from(edvEmployees).orderBy(desc(edvEmployees.createdAt));
+
+      return baseList.filter(emp => {
+        const matchesSearch = !input?.search || emp.fullName.toLowerCase().includes(input.search.toLowerCase()) || emp.taxIdNumber.toLowerCase().includes(input.search.toLowerCase()) || (emp.cct && emp.cct.toLowerCase().includes(input.search.toLowerCase()));
+        return matchesSearch;
+      });
     }),
 
   createEmployee: protectedProcedure

@@ -215,3 +215,32 @@ export const edvEmployees = mysqlTable("edv_employees", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
+
+export const edvVectorMemory = mysqlTable("edv_vector_memory", {
+  id: int("id").autoincrement().primaryKey(),
+  sourceType: mysqlEnum("sourceType", ["rule", "policy", "workflow", "document"]).notNull(),
+  sourceId: int("sourceId").notNull(),
+  contentChunk: text("contentChunk").notNull(),
+  embeddingJson: text("embeddingJson").notNull(), // JSON serializado del vector de embeddings
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export const edvCertificates = mysqlTable("edv_certificates", {
+  id: int("id").autoincrement().primaryKey(),
+  taskId: int("taskId").notNull().references(() => tasks.id),
+  recipientEmail: varchar("recipientEmail", { length: 255 }).notNull(),
+  signatureHash: varchar("signatureHash", { length: 255 }).notNull(),
+  status: mysqlEnum("status", ["signed", "sent", "verified", "failed"]).default("signed").notNull(),
+  sentAt: timestamp("sentAt").defaultNow().notNull(),
+});
+
+export const edvInvoices = mysqlTable("edv_invoices", {
+  id: int("id").autoincrement().primaryKey(),
+  taskId: int("taskId").references(() => tasks.id),
+  clientId: int("clientId").notNull().references(() => edvClients.id),
+  amount: decimal("amount", { precision: 12, scale: 2 }).notNull(),
+  status: mysqlEnum("status", ["pending", "paid", "cancelled"]).default("pending").notNull(),
+  externalPaymentReference: varchar("externalPaymentReference", { length: 255 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
