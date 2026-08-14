@@ -83,22 +83,24 @@ export async function executeCognitiveAgentTask(input: AgentTaskInput) {
   const clientId = Number(input.payload.clientId);
   if (!isNaN(clientId) && clientId > 0) {
     const clientRows = await db.select().from(edvClients).where(eq(edvClients.id, clientId)).limit(1);
-    if (clientRows[0]) {
-      clientName = clientRows[0].name;
-      input.payload.clientName = clientName;
-      input.payload.clientTaxId = clientRows[0].taxId;
+    if (!clientRows[0]) {
+      throw new Error(`Cliente con ID ${clientId} no encontrado en el padrón institucional EDV`);
     }
+    clientName = clientRows[0].name;
+    input.payload.clientName = clientName;
+    input.payload.clientTaxId = clientRows[0].taxId;
   }
 
   const employeeId = Number(input.payload.employeeId);
   if (!isNaN(employeeId) && employeeId > 0) {
     const employeeRows = await db.select().from(edvEmployees).where(eq(edvEmployees.id, employeeId)).limit(1);
-    if (employeeRows[0]) {
-      input.payload.employeeName = employeeRows[0].fullName;
-      input.payload.employeeTaxId = employeeRows[0].taxIdNumber;
-      input.payload.baseSalary = Number(employeeRows[0].baseSalary);
-      input.payload.cct = employeeRows[0].cct;
+    if (!employeeRows[0]) {
+      throw new Error(`Empleado con ID ${employeeId} no encontrado en la nómina institucional EDV`);
     }
+    input.payload.employeeName = employeeRows[0].fullName;
+    input.payload.employeeTaxId = employeeRows[0].taxIdNumber;
+    input.payload.baseSalary = Number(employeeRows[0].baseSalary);
+    input.payload.cct = employeeRows[0].cct;
   }
 
   const rules = await db.select().from(organizationalDnaRules).limit(20);

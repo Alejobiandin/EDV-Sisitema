@@ -49,3 +49,30 @@ describe("calculateDeterministicAccounting", () => {
     expect(result.requiresApproval).toBe(false);
   });
 });
+
+describe("executeCognitiveAgentTask strict validation", () => {
+  it("rechaza ejecución si el clientId no existe en la base institucional EDV", async () => {
+    const { executeCognitiveAgentTask } = await import("./agentEngine");
+    await expect(
+      executeCognitiveAgentTask({
+        agentId: 1,
+        taskType: "tax_computation",
+        payload: { clientId: 999999, grossSales: 100000, vatPurchases: 10000 },
+        userId: 1,
+      })
+    ).rejects.toThrow(/Cliente con ID 999999 no encontrado/);
+  });
+
+  it("rechaza ejecución si el employeeId no existe en la base institucional EDV", async () => {
+    const { executeCognitiveAgentTask } = await import("./agentEngine");
+    await expect(
+      executeCognitiveAgentTask({
+        agentId: 3,
+        taskType: "payroll_liquidation",
+        payload: { employeeId: 888888, baseSalary: 500000 },
+        userId: 1,
+      })
+    ).rejects.toThrow(/Empleado con ID 888888 no encontrado/);
+  });
+});
+

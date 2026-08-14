@@ -22,5 +22,9 @@
 - [x] Conectar clientId y employeeId al motor EDV para hidratar tareas desde los maestros persistidos
 - [x] Agregar importación masiva validada de clientes mediante CSV
 - [x] Mostrar campos precargados y bloquear ejecuciones con referencias de maestros inválidas o faltantes
-- [ ] Corregir la mutación de importación masiva de clientes en ClientRegistry.tsx usando hooks de nivel superior y estado React
-- [ ] Hacer que executeCognitiveAgentTask valide estrictamente IDs de clientes y empleados existentes antes de continuar
+- [x] Corregir la mutación de importación masiva de clientes en ClientRegistry.tsx usando hooks de nivel superior y estado React
+- [x] Hacer que executeCognitiveAgentTask valide estrictamente IDs de clientes y empleados existentes antes de continuar
+- [x] Hacer que executeCognitiveAgentTask lance error explícito ante clientId o employeeId inexistentes con prueba Vitest asociada
+- [x] Añadir prueba Vitest para verificar que executeCognitiveAgentTask rechaza IDs inválidos de clientes y empleados
+- [x] Añadir prueba Vitest para verificar que executeCognitiveAgentTask rechaza employeeId inválidos
+- [x] Ejecutar pnpm check && pnpm test para validar el nuevo test de employeeId inválido
