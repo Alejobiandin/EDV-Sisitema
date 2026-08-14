@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import { decimal, int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
 
 export const users = mysqlTable("users", {
   id: int("id").autoincrement().primaryKey(),
@@ -191,3 +191,27 @@ export type UpdateUserPreference = Partial<typeof userPreferences.$inferInsert>;
 export type UserPattern = typeof userPatterns.$inferSelect;
 export type InsertUserPattern = typeof userPatterns.$inferInsert;
 export type UpdateUserPattern = Partial<typeof userPatterns.$inferInsert>;
+
+export const edvClients = mysqlTable("edv_clients", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  taxId: varchar("taxId", { length: 50 }).notNull().unique(),
+  taxCategory: varchar("taxCategory", { length: 100 }).notNull(), // Responsable Inscripto, Monotributo, etc.
+  email: varchar("email", { length: 255 }),
+  phone: varchar("phone", { length: 50 }),
+  status: mysqlEnum("status", ["active", "suspended", "archived"]).default("active").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export const edvEmployees = mysqlTable("edv_employees", {
+  id: int("id").autoincrement().primaryKey(),
+  clientId: int("clientId").notNull().references(() => edvClients.id),
+  fullName: varchar("fullName", { length: 255 }).notNull(),
+  taxIdNumber: varchar("taxIdNumber", { length: 50 }).notNull().unique(), // CUIL / CUIT
+  baseSalary: decimal("baseSalary", { precision: 12, scale: 2 }).notNull(),
+  cct: varchar("cct", { length: 100 }), // Convenio Colectivo de Trabajo
+  status: mysqlEnum("status", ["active", "leave", "terminated"]).default("active").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});

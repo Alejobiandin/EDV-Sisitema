@@ -1,6 +1,6 @@
 import { invokeLLM } from "./_core/llm";
 import { getDb } from "./db";
-import { agents, organizationalDnaRules, organizationalDnaPolicies, tasks, taskExecutions, auditLog, notifications } from "../drizzle/schema";
+import { agents, organizationalDnaRules, organizationalDnaPolicies, tasks, taskExecutions, auditLog, notifications, edvClients, edvEmployees } from "../drizzle/schema";
 import { eq } from "drizzle-orm";
 import { runPythonCalculation } from "./pythonBridge";
 
@@ -77,6 +77,29 @@ export async function executeCognitiveAgentTask(input: AgentTaskInput) {
   const agentRows = await db.select().from(agents).where(eq(agents.id, input.agentId)).limit(1);
   const agent = agentRows[0];
   if (!agent) throw new Error(`Célula agente con ID ${input.agentId} no encontrada`);
+
+  // Hidratar cliente y empleado desde la base institucional EDV si existen
+  let clientName = input.payload.clientName ?? "Cliente Demostración";
+  const clientId = Number(input.payload.clientId);
+  if (!isNaN(clientId) && clientId > 0) {
+    const clientRows = await db.select().from(edvClients).where(eq(edvClients.id, clientId)).limit(1);
+    if (clientRows[0]) {
+      clientName = clientRows[0].name;
+      input.payload.clientName = clientName;
+      input.payload.clientTaxId = clientRows[0].taxId;
+    }
+  }
+
+  const employeeId = Number(input.payload.employeeId);
+  if (!isNaN(employeeId) && employeeId > 0) {
+    const employeeRows = await db.select().from(edvEmployees).where(eq(edvEmployees.id, employeeId)).limit(1);
+    if (employeeRows[0]) {
+      input.payload.employeeName = employeeRows[0].fullName;
+      input.payload.employeeTaxId = employeeRows[0].taxIdNumber;
+      input.payload.baseSalary = Number(employeeRows[0].baseSalary);
+      input.payload.cct = employeeRows[0].cct;
+    }
+  }
 
   const rules = await db.select().from(organizationalDnaRules).limit(20);
   const policies = await db.select().from(organizationalDnaPolicies).limit(20);

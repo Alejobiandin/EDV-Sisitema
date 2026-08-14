@@ -9,6 +9,7 @@ import { tasksRouter } from "./routers/tasks";
 import { documentsRouter } from "./routers/documents";
 import { systemLogsRouter } from "./routers/system_logs";
 import { reportsRouter } from "./routers/reports";
+import { edvManagementRouter } from "./routers/edvManagement";
 
 export const appRouter = router({
   system: systemRouter,
@@ -29,6 +30,7 @@ export const appRouter = router({
   documents: documentsRouter,
   systemLogs: systemLogsRouter,
   reports: reportsRouter,
+  edvManagement: edvManagementRouter,
 });
 
 export type AppRouter = typeof appRouter;

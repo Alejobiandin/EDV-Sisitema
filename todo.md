@@ -18,3 +18,9 @@
 
 > Nota de alcance: los porcentajes y umbrales de cálculo incluidos en esta versión son parámetros demostrativos configurables; no constituyen liquidación legal válida sin validación profesional y actualización normativa.
 - [x] Agregar exportación de reportes de IVA y salarios a PDF y Excel, con endpoints protegidos, descargas desde dashboard y pruebas de generación
+- [x] Agregar módulo visual EDV de clientes y empleados con alta individual, carga masiva CSV validada y precarga en tareas de declaraciones juradas
+- [x] Conectar clientId y employeeId al motor EDV para hidratar tareas desde los maestros persistidos
+- [x] Agregar importación masiva validada de clientes mediante CSV
+- [x] Mostrar campos precargados y bloquear ejecuciones con referencias de maestros inválidas o faltantes
+- [ ] Corregir la mutación de importación masiva de clientes en ClientRegistry.tsx usando hooks de nivel superior y estado React
+- [ ] Hacer que executeCognitiveAgentTask valide estrictamente IDs de clientes y empleados existentes antes de continuar
