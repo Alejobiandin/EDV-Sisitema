@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/sidebar";
 import { startLogin } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { BriefcaseBusiness, LayoutDashboard, LogOut, PanelLeft } from "lucide-react";
+import { Bot, BriefcaseBusiness, LayoutDashboard, LogOut, PanelLeft } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -30,6 +30,7 @@ import { Button } from "./ui/button";
 const menuItems = [
   { icon: LayoutDashboard, label: "Visión general", path: "/" },
   { icon: BriefcaseBusiness, label: "Clientes y empleados", path: "/maestros" },
+  { icon: Bot, label: "Asistente y Red ADN", path: "/asistente" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";

@@ -11,6 +11,7 @@ import { systemLogsRouter } from "./routers/system_logs";
 import { reportsRouter } from "./routers/reports";
 import { edvManagementRouter } from "./routers/edvManagement";
 import { vectorSearchRouter } from "./routers/vectorSearch";
+import { edvAdvancedRouter } from "./routers/edvAdvanced";
 
 export const appRouter = router({
   system: systemRouter,
@@ -33,6 +34,7 @@ export const appRouter = router({
   reports: reportsRouter,
   edvManagement: edvManagementRouter,
   vectorSearch: vectorSearchRouter,
+  edvAdvanced: edvAdvancedRouter,
 });
 
 export type AppRouter = typeof appRouter;
