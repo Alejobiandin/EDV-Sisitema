@@ -71,6 +71,10 @@ export default function TaxConfig() {
     onError: err => setMessage(`Error enviando correo: ${err.message}`),
   });
 
+  const exportMutation = trpc.reports.export.useMutation({
+    onError: err => setMessage(`Error exportando reporte: ${err.message}`),
+  });
+
   const isCertValid = !certContent || (certContent.includes("-----BEGIN CERTIFICATE-----") && certContent.includes("-----END CERTIFICATE-----"));
   const isKeyValid = !keyContent || (keyContent.includes("-----BEGIN") && keyContent.includes("KEY-----"));
 
@@ -229,10 +233,42 @@ export default function TaxConfig() {
 
                 {/* Reporte gerencial de ventas e IVA por punto de venta */}
                 <Card className="border-border/70 shadow-sm">
-                  <CardHeader>
+                  <CardHeader className="flex flex-row items-center justify-between">
                     <CardTitle className="text-base flex items-center gap-2">
                       <TrendingUp className="h-5 w-5 text-primary" /> Ventas e IVA Discriminado por Punto de Venta
                     </CardTitle>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={async () => {
+                          const res = await exportMutation.mutateAsync({ reportType: "managerial_vat", format: "pdf" });
+                          const blob = new Blob([Uint8Array.from(atob(res.dataBase64), c => c.charCodeAt(0))], { type: res.contentType });
+                          const url = URL.createObjectURL(blob);
+                          const a = document.createElement("a");
+                          a.href = url;
+                          a.download = res.fileName;
+                          a.click();
+                        }}
+                      >
+                        Exportar PDF
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={async () => {
+                          const res = await exportMutation.mutateAsync({ reportType: "managerial_vat", format: "xlsx" });
+                          const blob = new Blob([Uint8Array.from(atob(res.dataBase64), c => c.charCodeAt(0))], { type: res.contentType });
+                          const url = URL.createObjectURL(blob);
+                          const a = document.createElement("a");
+                          a.href = url;
+                          a.download = res.fileName;
+                          a.click();
+                        }}
+                      >
+                        Exportar Excel
+                      </Button>
+                    </div>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <Table>
