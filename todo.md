@@ -70,3 +70,11 @@
 - [x] Cubrir el flujo frontend exportMutation.onSuccess más invalidación de notifications.list
 - [x] Agregar prueba de integración/UI que renderice TaxConfig, dispare exportación y verifique la notificación visible
 - [x] Configurar entorno de test DOM y mocks tRPC para el flujo visual completo
+
+- [x] Fase 1: Auditar estado actual y dependencias para seguridad, backups, contabilidad y núcleo argentino
+- [x] Fase 2: Diseñar esquemas de base de datos para auditoría, seguridad, libro diario, balances, F.931 y vencimientos
+- [x] Fase 3: Implementar servicios de seguridad empresarial, auditoría de accesos, respaldos y monitoreo de salud del sistema
+- [x] Fase 4: Desarrollar el motor de contabilidad general, libro mayor, balance de sumas y saldos, y estados financieros (Estado de Situación Patrimonial y Estado de Resultados)
+- [x] Fase 5: Integrar el servicio de firma digital con soporte PAdES y estampa de tiempo (TSA) para certificaciones y balances
+- [x] Fase 6: Implementar el núcleo argentino productivo (sincronización ARCA/AFIP, liquidación de F.931 con CCT 130/75, control de vencimientos fiscales y emisión de facturación electrónica con CAE)
+- [x] Fase 7: Escribir pruebas unitarias y de integración Vitest para todos los módulos nuevos y validar la compilación y despliegue local

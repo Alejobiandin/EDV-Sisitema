@@ -71,6 +71,13 @@
       "when": 1786758421604,
       "tag": "0009_cute_talisman",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "5",
+      "when": 1786760262877,
+      "tag": "0010_dry_professor_monster",
+      "breakpoints": true
     }
   ]
 }

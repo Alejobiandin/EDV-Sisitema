@@ -326,3 +326,66 @@ export const taxSyncLogs = mysqlTable("tax_sync_logs", {
   errorMessage: text("error_message"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
+
+export const accountingAccounts = mysqlTable("accounting_accounts", {
+  id: int("id").autoincrement().primaryKey(),
+  organizationId: int("organization_id").notNull(),
+  code: varchar("code", { length: 50 }).notNull(), // Ej: 1.1.1.01 Caja
+  name: varchar("name", { length: 255 }).notNull(),
+  type: mysqlEnum("type", ["asset", "liability", "equity", "revenue", "expense"]).notNull(),
+  isActive: int("is_active").default(1).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const accountingJournalEntries = mysqlTable("accounting_journal_entries", {
+  id: int("id").autoincrement().primaryKey(),
+  organizationId: int("organization_id").notNull(),
+  entryNumber: int("entry_number").notNull(),
+  date: timestamp("date").notNull(),
+  description: text("description").notNull(),
+  status: mysqlEnum("status", ["draft", "posted", "closed"]).default("posted").notNull(),
+  createdBy: int("created_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const accountingJournalLines = mysqlTable("accounting_journal_lines", {
+  id: int("id").autoincrement().primaryKey(),
+  entryId: int("entry_id").notNull().references(() => accountingJournalEntries.id),
+  accountId: int("account_id").notNull().references(() => accountingAccounts.id),
+  debit: decimal("debit", { precision: 15, scale: 2 }).default("0.00").notNull(),
+  credit: decimal("credit", { precision: 15, scale: 2 }).default("0.00").notNull(),
+  concept: text("concept"),
+});
+
+export const backupAuditLogs = mysqlTable("backup_audit_logs", {
+  id: int("id").autoincrement().primaryKey(),
+  backupType: varchar("backup_type", { length: 50 }).notNull(), // snapshot, database_dump, config_archive
+  status: varchar("status", { length: 32 }).notNull(), // success, failed
+  s3Url: varchar("s3_url", { length: 512 }),
+  sizeBytes: int("size_bytes"),
+  triggeredBy: int("triggered_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const argentinaPayrollDeclarations = mysqlTable("argentina_payroll_declarations", {
+  id: int("id").autoincrement().primaryKey(),
+  organizationId: int("organization_id").notNull(),
+  period: varchar("period", { length: 20 }).notNull(), // Ej: 2026-07
+  totalEmployees: int("total_employees").notNull(),
+  grossPayroll: decimal("grossPayroll", { precision: 15, scale: 2 }).notNull(),
+  employerContributions: decimal("employer_contributions", { precision: 15, scale: 2 }).notNull(),
+  employeeContributions: decimal("employee_contributions", { precision: 15, scale: 2 }).notNull(),
+  totalF931: decimal("total_f931", { precision: 15, scale: 2 }).notNull(),
+  status: mysqlEnum("status", ["draft", "submitted", "paid"]).default("draft").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const argentinaTaxDeadlines = mysqlTable("argentina_tax_deadlines", {
+  id: int("id").autoincrement().primaryKey(),
+  taxName: varchar("tax_name", { length: 100 }).notNull(), // IVA, F.931, IIBB, Ganancias
+  cuitEnding: varchar("cuit_ending", { length: 10 }).notNull(), // Ej: '0-1', '2-3', etc.
+  dueDate: timestamp("due_date").notNull(),
+  period: varchar("period", { length: 20 }).notNull(),
+  status: mysqlEnum("status", ["pending", "completed", "overdue"]).default("pending").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
