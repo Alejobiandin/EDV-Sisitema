@@ -283,3 +283,20 @@ export const bankTransactions = mysqlTable("bank_transactions", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
+
+export const organizations = mysqlTable("organizations", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  taxId: varchar("tax_id", { length: 50 }).notNull().unique(),
+  status: varchar("status", { length: 32 }).default("active").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const organizationMembers = mysqlTable("organization_members", {
+  id: int("id").autoincrement().primaryKey(),
+  organizationId: int("organization_id").notNull(),
+  userId: int("user_id").notNull(),
+  roleInOrg: varchar("role_in_org", { length: 50 }).default("member").notNull(), // owner, partner, accountant, client_viewer
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});

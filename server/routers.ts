@@ -14,6 +14,7 @@ import { vectorSearchRouter } from "./routers/vectorSearch";
 import { edvAdvancedRouter } from "./routers/edvAdvanced";
 import { organsRouter } from "./routers/organs";
 import { bankingRouter } from "./routers/banking";
+import { organizationsRouter } from "./routers/organizations";
 
 export const appRouter = router({
   system: systemRouter,
@@ -39,6 +40,7 @@ export const appRouter = router({
   edvAdvanced: edvAdvancedRouter,
   organs: organsRouter,
   banking: bankingRouter,
+  organizations: organizationsRouter,
 });
 
 export type AppRouter = typeof appRouter;

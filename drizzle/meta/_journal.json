@@ -43,6 +43,13 @@
       "when": 1786757199298,
       "tag": "0005_big_cargill",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1786757970082,
+      "tag": "0006_freezing_yellow_claw",
+      "breakpoints": true
     }
   ]
 }
