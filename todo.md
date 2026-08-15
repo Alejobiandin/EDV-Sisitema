@@ -34,3 +34,4 @@
 - [x] Ajustar el cálculo de rentabilidad para soportar costos operativos diferenciados y probar órdenes distintos entre margen y facturación
 - [x] Conectar costos operativos diferenciados a una fuente persistida de EDV para el cálculo real del dashboard
 - [x] Agregar prueba Vitest de dashboard.summary con costos diferenciados en la ruta real
+- [x] Implementar servicio de webhooks seguros, firmados e idempotentes para Stripe y Mercado Pago con pruebas unitarias en webhookService.test.ts
