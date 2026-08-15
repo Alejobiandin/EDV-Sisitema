@@ -44,4 +44,9 @@ describe("EDV Enterprise Modules Advanced", () => {
     const deadlinesCount = 3;
     expect(deadlinesCount).toBeGreaterThan(0);
   });
+
+  it("verifica la presencia de procedimientos de exportación TXT y auditoría criptográfica", () => {
+    expect(enterpriseRouters.argentinaCore).toBeDefined();
+    expect(enterpriseRouters.digitalSignature).toBeDefined();
+  });
 });

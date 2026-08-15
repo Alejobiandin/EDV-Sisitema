@@ -99,3 +99,10 @@
 - [x] Fase 4: Implementar visor interactivo de firmas digitales con inspección de huella SHA-256, TSA y validez legal
 - [x] Fase 5: Implementar filtros avanzados y búsqueda en el panel de vencimientos fiscales por estado, impuesto y CUIT
 - [x] Fase 6: Escribir pruebas unitarias y de integración y verificar compilación y tests (70 pruebas pasando)
+
+- [x] Fase 1: Auditar exportaciones fiscales, cadena de auditoría y panel de vencimientos actuales
+- [x] Fase 2: Diseñar contratos TXT para aplicativos AFIP, verificación de integridad y calendario fiscal
+- [x] Fase 3: Implementar exportación de reportes fiscales a TXT de posición fija / delimitado compatible con aplicativos AFIP (SICOSS / SICRE)
+- [x] Fase 4: Implementar dashboard de auditoría criptográfica para verificar la integridad histórica de asientos y balances firmados
+- [x] Fase 5: Implementar calendario interactivo de vencimientos fiscales en el panel de control
+- [x] Fase 6: Escribir pruebas unitarias y de integración y verificar compilación y tests (71 pruebas pasando)
