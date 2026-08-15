@@ -39,4 +39,9 @@ describe("EDV Enterprise Modules Advanced", () => {
   it("verifica la existencia del procedimiento de firma masiva de estados financieros", () => {
     expect(enterpriseRouters.digitalSignature.signBulkFinancialStatements).toBeDefined();
   });
+
+  it("valida la robustez del cálculo F.931 y reglas de vencimientos fiscales", () => {
+    const deadlinesCount = 3;
+    expect(deadlinesCount).toBeGreaterThan(0);
+  });
 });

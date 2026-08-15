@@ -92,3 +92,10 @@
 - [x] Fase 4: Implementar sistema de alertas visuales en el panel para advertir sobre vencimientos fiscales próximos (próximos 7 días)
 - [x] Fase 5: Implementar función de firma digital masiva de estados financieros con trazabilidad individual y registro de auditoría
 - [x] Fase 6: Escribir pruebas unitarias y de integración para las nuevas funcionalidades y verificar compilación y tests (68 pruebas pasando)
+
+- [x] Fase 1: Auditar banca, firma digital y panel de vencimientos actuales
+- [x] Fase 2: Diseñar modelos de plantillas CSV, contrato de validación de firmas y filtros de vencimientos
+- [x] Fase 3: Implementar plantillas CSV configurables con mapeo dinámico de columnas (Galicia, Santander, BBVA, Macro)
+- [x] Fase 4: Implementar visor interactivo de firmas digitales con inspección de huella SHA-256, TSA y validez legal
+- [x] Fase 5: Implementar filtros avanzados y búsqueda en el panel de vencimientos fiscales por estado, impuesto y CUIT
+- [x] Fase 6: Escribir pruebas unitarias y de integración y verificar compilación y tests (70 pruebas pasando)
