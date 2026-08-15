@@ -36,3 +36,8 @@
 - [x] Agregar prueba Vitest de dashboard.summary con costos diferenciados en la ruta real
 - [x] Implementar servicio de webhooks seguros, firmados e idempotentes para Stripe y Mercado Pago con pruebas unitarias en webhookService.test.ts
 - [x] Diseñar el mapa integral de 7 órganos y 21 células agente especializadas para cubrir la operación contable, fiscal, financiera, de recursos humanos y comercial de una empresa en EDV (registrado en EDV_Enterprise_Agents_Map.md)
+- [ ] Crear vistas dedicadas por órgano con métricas, tareas, alertas y agentes activos
+- [ ] Ampliar el catálogo de agentes EDV desde las 4 células actuales hacia una red especializada por área
+- [ ] Agregar reglas del ADN con convenio, jurisdicción, período, vigencia y prioridad
+- [ ] Implementar conexión segura a feeds bancarios y conciliación idempotente
+- [ ] Probar escenarios completos por órgano y documentar conexiones externas requeridas

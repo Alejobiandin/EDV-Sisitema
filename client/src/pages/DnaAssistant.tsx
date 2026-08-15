@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Bot, Network, Send, ShieldCheck, Wallet } from "lucide-react";
+import { Bot, Gavel, Network, Send, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +16,7 @@ export default function DnaAssistant() {
 
   const askMutation = trpc.edvAdvanced.askDnaAssistant.useMutation();
   const vectorQuery = trpc.edvAdvanced.vectorNetworkGraph.useQuery();
+  const rulesQuery = trpc.dna.rules.list.useQuery();
 
   const handleAsk = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,6 +85,8 @@ export default function DnaAssistant() {
             </CardContent>
           </Card>
         </div>
+
+        <Card className="border-amber-100 bg-white/95 shadow-sm"><CardHeader><div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.17em] text-amber-700"><Gavel className="h-4 w-4" /> Jurisdicción y convenios</div><CardTitle className="text-xl">Reglas activas del ADN</CardTitle><p className="text-sm text-slate-500">Cada regla conserva fuente, vigencia, prioridad y guardrails para HITL.</p></CardHeader><CardContent><div className="grid gap-3 md:grid-cols-3">{rulesQuery.data?.filter(rule => rule.isActive === 1).map(rule => <div key={rule.id} className="rounded-xl border border-amber-100 bg-amber-50/40 p-4"><div className="flex items-start justify-between gap-2"><p className="text-sm font-semibold text-slate-800">{rule.name}</p><Badge variant="outline" className="shrink-0 border-amber-200 text-amber-700">P{rule.priority}</Badge></div><p className="mt-2 text-xs leading-5 text-slate-600">{rule.description}</p><div className="mt-3 flex flex-wrap gap-1.5">{rule.jurisdiction ? <Badge variant="secondary">{rule.jurisdiction}</Badge> : null}{rule.collectiveAgreement ? <Badge variant="secondary">{rule.collectiveAgreement}</Badge> : null}</div></div>)}</div>{!rulesQuery.isLoading && !rulesQuery.data?.length ? <p className="text-sm text-slate-500">No hay reglas cargadas.</p> : null}</CardContent></Card>
       </div>
     </div>
   </DashboardLayout>;

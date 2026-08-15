@@ -4,6 +4,8 @@ import NotFound from "@/pages/NotFound";
 import Dashboard from "@/pages/Dashboard";
 import ClientRegistry from "@/pages/ClientRegistry";
 import DnaAssistant from "@/pages/DnaAssistant";
+import Organs from "@/pages/Organs";
+import Banking from "@/pages/Banking";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
@@ -14,6 +16,8 @@ function Router() {
       <Route path="/" component={Dashboard} />
       <Route path="/maestros" component={ClientRegistry} />
       <Route path="/asistente" component={DnaAssistant} />
+      <Route path="/organos" component={Organs} />
+      <Route path="/banca" component={Banking} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

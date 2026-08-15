@@ -21,29 +21,31 @@ Para que EDV reemplace con éxito la operación corporativa, el sistema se divid
 4. **VAT & Sales Tax Agent (Célula de IVA y Tributos Indirectos):** Calcula débitos y créditos fiscales, procesa libros IVA compras/ventas y determina las posiciones mensuales.
 5. **Corporate Income Tax Agent (Célula de Impuesto a las Ganancias):** Monitores anticipos, calcula la renta neta imponible corporativa, deduce amortizaciones y proyecta la liquidación anual.
 6. **Withholding & Compliance Agent (Célula de Retenciones y Percepciones):** Controla padrones de AFIP/ARCA y jurisdicciones locales, calculando retenciones en origen para pagos a proveedores y cobros a clientes.
+7. **Tax Data Intake Agent (Célula de Ingesta Fiscal):** Recibe comprobantes, padrones y archivos de trabajo, normaliza los datos y valida su integridad antes de iniciar los cálculos tributarios.
 
 ### Órgano III: Área Contable y Financiera (Accounting & Treasury)
-7. **General Ledger Agent (Célula de Contabilidad y Asientos):** Registra automáticamente comprobantes, genera el libro diario y mayor, y clasifica transacciones según el plan de cuentas.
-8. **Accounts Receivable Agent (Célula de Cobranzas y Cuentas Corrientes):** Realiza el seguimiento de facturas emitidas, emite alertas de morosidad, concilia cobros de pasarelas (Stripe/Mercado Pago) y actualiza estados de cuenta.
-9. **Accounts Payable Agent (Célula de Proveedores y Pagos):** Valida facturas electrónicas de compras, coteja con órdenes de compra y programa los pagos según el flujo de caja disponible.
-10. **Treasury & Cash Flow Agent (Célula de Tesorería y Caja):** Proyecta la liquidez a 30, 60 y 90 días, administra conciliaciones bancarias diarias y optimiza excedentes financieros.
+8. **General Ledger Agent (Célula de Contabilidad y Asientos):** Registra automáticamente comprobantes, genera el libro diario y mayor, y clasifica transacciones según el plan de cuentas.
+9. **Accounts Receivable Agent (Célula de Cobranzas y Cuentas Corrientes):** Realiza el seguimiento de facturas emitidas, emite alertas de morosidad, concilia cobros de pasarelas (Stripe/Mercado Pago) y actualiza estados de cuenta.
+10. **Accounts Payable Agent (Célula de Proveedores y Pagos):** Valida facturas electrónicas de compras, coteja con órdenes de compra y programa los pagos según el flujo de caja disponible.
+11. **Treasury & Cash Flow Agent (Célula de Tesorería y Caja):** Proyecta la liquidez a 30, 60 y 90 días, administra conciliaciones bancarias diarias y optimiza excedentes financieros.
+12. **Financial Close & Controls Agent (Célula de Cierre y Controles):** Ejecuta checklists de cierre, verifica consistencia entre subdiarios y libro mayor, y eleva diferencias materiales a HITL.
 
 ### Órgano IV: Área de Capital Humano y Nómina (Payroll & HR)
-11. **Payroll Calculation Agent (Célula de Liquidación de Haberes):** Calcula sueldos brutos, presentismo, antigüedad, horas suplementarias y deducciones de ley conforme a convenios colectivos.
-12. **Social Charges & F931 Agent (Célula de Cargas Sociales y F.931):** Determina las contribuciones patronales a la seguridad social, obra social y sindicatos, generando la base para las declaraciones juradas mensuales.
-13. **Personnel Administration Agent (Célula de Legajos y Novedades):** Administra altas tempranas, licencias, vacaciones, bajas y novedades de personal sincronizadas con el padrón de empleados.
+13. **Payroll Calculation Agent (Célula de Liquidación de Haberes):** Calcula sueldos brutos, presentismo, antigüedad, horas suplementarias y deducciones de ley conforme a convenios colectivos.
+14. **Social Charges & F931 Agent (Célula de Cargas Sociales y F.931):** Determina las contribuciones patronales a la seguridad social, obra social y sindicatos, generando la base para las declaraciones juradas mensuales.
+15. **Personnel Administration Agent (Célula de Legajos y Novedades):** Administra altas tempranas, licencias, vacaciones, bajas y novedades de personal sincronizadas con el padrón de empleados.
 
 ### Órgano V: Área Comercial y Facturación (Revenue & Billing)
-14. **Invoicing Agent (Célula de Emisión de Facturación):** Conecta con los servicios de factura electrónica (AFIP/ARCA o APIs fiscales), emite comprobantes A, B o C y genera notas de crédito o débito.
-15. **Pricing & Fee Agent (Célula de Tarifas y Contratos):** Monitorea acuerdos comerciales con clientes, actualiza honorarios o precios según fórmulas indexadas y genera los cargos periódicos.
+16. **Invoicing Agent (Célula de Emisión de Facturación):** Conecta con los servicios de factura electrónica (AFIP/ARCA o APIs fiscales), emite comprobantes A, B o C y genera notas de crédito o débito.
+17. **Pricing & Fee Agent (Célula de Tarifas y Contratos):** Monitorea acuerdos comerciales con clientes, actualiza honorarios o precios según fórmulas indexadas y genera los cargos periódicos.
 
 ### Órgano VI: Área de Operaciones y Abastecimiento (Supply & Ops)
-16. **Inventory & Stock Agent (Célula de Inventario y Activos):** Controla ingresos y salidas de mercadería, calcula valuaciones de stock y detecta puntos de reorden.
-17. **Vendor Management Agent (Célula de Evaluación de Proveedores):** Califica el cumplimiento, tiempos de entrega y competitividad de precios de los proveedores habituales.
+18. **Inventory & Stock Agent (Célula de Inventario y Activos):** Controla ingresos y salidas de mercadería, calcula valuaciones de stock y detecta puntos de reorden.
+19. **Vendor Management Agent (Célula de Evaluación de Proveedores):** Califica el cumplimiento, tiempos de entrega y competitividad de precios de los proveedores habituales.
 
 ### Órgano VII: Área Legal y Contractual (Legal Operations)
-18. **Contract Intelligence Agent (Célula de Análisis de Contratos):** Revisa contratos comerciales, identifica cláusulas de riesgo, plazos de vencimiento y obligaciones de cumplimiento.
-19. **Regulatory Watch Agent (Célula de Vigilancia Normativa):** Analiza boletines oficiales y nuevas resoluciones fiscales o laborales para proponer actualizaciones automáticas al ADN Organizacional.
+20. **Contract Intelligence Agent (Célula de Análisis de Contratos):** Revisa contratos comerciales, identifica cláusulas de riesgo, plazos de vencimiento y obligaciones de cumplimiento.
+21. **Regulatory Watch Agent (Célula de Vigilancia Normativa):** Analiza boletines oficiales y nuevas resoluciones fiscales o laborales para proponer actualizaciones automáticas al ADN Organizacional.
 
 ---
 

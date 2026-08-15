@@ -14,6 +14,12 @@ export const dnaRouter = router({
         name: z.string().min(1),
         description: z.string().optional(),
         content: z.string().min(1),
+        jurisdiction: z.string().optional(),
+        collectiveAgreement: z.string().optional(),
+        effectiveFrom: z.coerce.date().optional(),
+        effectiveTo: z.coerce.date().optional(),
+        priority: z.number().int().min(0).optional(),
+        isActive: z.number().int().min(0).max(1).optional(),
       }))
       .mutation(async ({ input }) => {
         return createOrganizationalDnaRule(input);
@@ -30,6 +36,12 @@ export const dnaRouter = router({
         name: z.string().min(1).optional(),
         description: z.string().optional(),
         content: z.string().min(1).optional(),
+        jurisdiction: z.string().optional(),
+        collectiveAgreement: z.string().optional(),
+        effectiveFrom: z.coerce.date().optional(),
+        effectiveTo: z.coerce.date().optional(),
+        priority: z.number().int().min(0).optional(),
+        isActive: z.number().int().min(0).max(1).optional(),
       }))
       .mutation(async ({ input }) => {
         const { id, ...data } = input;

@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/sidebar";
 import { startLogin } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { Bot, BriefcaseBusiness, LayoutDashboard, LogOut, PanelLeft } from "lucide-react";
+import { Banknote, Bot, BriefcaseBusiness, LayoutDashboard, Landmark, LogOut, PanelLeft } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -31,6 +31,8 @@ const menuItems = [
   { icon: LayoutDashboard, label: "Visión general", path: "/" },
   { icon: BriefcaseBusiness, label: "Clientes y empleados", path: "/maestros" },
   { icon: Bot, label: "Asistente y Red ADN", path: "/asistente" },
+  { icon: Landmark, label: "Órganos operativos", path: "/organos" },
+  { icon: Banknote, label: "Banca y conciliación", path: "/banca" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";

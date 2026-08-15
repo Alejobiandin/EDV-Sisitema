@@ -22,6 +22,20 @@
       "when": 1786715878826,
       "tag": "0002_tense_secret_warriors",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1786755069762,
+      "tag": "0003_first_stingray",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1786755204632,
+      "tag": "0004_yummy_havok",
+      "breakpoints": true
     }
   ]
 }
