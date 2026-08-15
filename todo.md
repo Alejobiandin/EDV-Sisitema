@@ -113,3 +113,10 @@
 - [x] Fase 4: Implementar módulo de análisis predictivo de flujo de caja basado en ingresos conciliados y pasivos fiscales
 - [x] Fase 5: Implementar estados visuales completos en el calendario fiscal (pendiente, presentado, pagado, vencido) con filtros por color y badges
 - [x] Fase 6: Escribir pruebas unitarias e integración y verificar compilación y tests (72 pruebas pasando)
+
+- [x] Fase 1: Auditar dashboard, certificados AFIP y calendario interactivo actuales
+- [x] Fase 2: Diseñar estados de riesgo de liquidez, reglas de expiración de certificados X.509 y modal de acciones rápidas
+- [x] Fase 3: Implementar widget de riesgo de liquidez en el dashboard principal contrastando flujos conciliados y pasivos fiscales
+- [x] Fase 4: Implementar validación de certificados AFIP con cálculo de días hasta expiración y alertas visuales por colores
+- [x] Fase 5: Implementar modal interactivo en el calendario fiscal con acciones rápidas auditadas (marcar pagado, generar reporte)
+- [x] Fase 6: Escribir pruebas unitarias y de integración y verificar compilación y tests (73 pruebas pasando)

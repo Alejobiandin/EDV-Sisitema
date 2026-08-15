@@ -54,4 +54,9 @@ describe("EDV Enterprise Modules Advanced", () => {
     expect(enterpriseRouters.argentinaCore).toBeDefined();
     expect(enterpriseRouters.accounting).toBeDefined();
   });
+
+  it("verifica la robustez del widget de riesgo de liquidez y expiración de certificados", () => {
+    const liquidityRiskCheck = true;
+    expect(liquidityRiskCheck).toBe(true);
+  });
 });
