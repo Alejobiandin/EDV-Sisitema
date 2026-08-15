@@ -34,6 +34,7 @@ const menuItems = [
   { icon: Bot, label: "Asistente y Red ADN", path: "/asistente", audience: "internal" },
   { icon: Landmark, label: "Órganos operativos", path: "/organos", audience: "internal" },
   { icon: Banknote, label: "Banca y conciliación", path: "/banca", audience: "internal" },
+  { icon: ShieldCheck, label: "Homologación ARCA", path: "/configuracion-fiscal", audience: "internal" },
   { icon: Landmark, label: "Conectar Open Banking", path: "/open-banking", audience: "internal" },
   { icon: ShieldCheck, label: "Panel RBAC", path: "/rbac", audience: "internal" },
   { icon: FileCheck2, label: "Aprobaciones y documentos", path: "/aprobaciones", audience: "all" },

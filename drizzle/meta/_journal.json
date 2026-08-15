@@ -50,6 +50,13 @@
       "when": 1786757970082,
       "tag": "0006_freezing_yellow_claw",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "5",
+      "when": 1786758178640,
+      "tag": "0007_lovely_sumo",
+      "breakpoints": true
     }
   ]
 }

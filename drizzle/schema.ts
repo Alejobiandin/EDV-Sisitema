@@ -300,3 +300,17 @@ export const organizationMembers = mysqlTable("organization_members", {
   roleInOrg: varchar("role_in_org", { length: 50 }).default("member").notNull(), // owner, partner, accountant, client_viewer
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
+
+export const taxConfigurations = mysqlTable("tax_configurations", {
+  id: int("id").autoincrement().primaryKey(),
+  organizationId: int("organization_id").notNull(),
+  environment: varchar("environment", { length: 32 }).default("homologation").notNull(), // homologation, production
+  cuit: varchar("cuit", { length: 50 }).notNull(),
+  pointOfSale: int("point_of_sale").default(1).notNull(),
+  certStorageKey: varchar("cert_storage_key", { length: 512 }),
+  keyStorageKey: varchar("key_storage_key", { length: 512 }),
+  status: varchar("status", { length: 32 }).default("pending_verification").notNull(),
+  lastVerifiedAt: timestamp("last_verified_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});

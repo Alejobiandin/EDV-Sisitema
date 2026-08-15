@@ -6,6 +6,7 @@ import ClientRegistry from "@/pages/ClientRegistry";
 import DnaAssistant from "@/pages/DnaAssistant";
 import Organs from "@/pages/Organs";
 import Banking from "@/pages/Banking";
+import TaxConfig from "@/pages/TaxConfig";
 import OpenBanking from "@/pages/OpenBanking";
 import RoleDashboard from "@/pages/RoleDashboard";
 import Approvals from "@/pages/Approvals";
@@ -21,6 +22,7 @@ function Router() {
       <Route path="/asistente" component={DnaAssistant} />
       <Route path="/organos" component={Organs} />
       <Route path="/banca" component={Banking} />
+      <Route path="/configuracion-fiscal" component={TaxConfig} />
       <Route path="/open-banking" component={OpenBanking} />
       <Route path="/rbac" component={RoleDashboard} />
       <Route path="/aprobaciones" component={Approvals} />
