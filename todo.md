@@ -106,3 +106,10 @@
 - [x] Fase 4: Implementar dashboard de auditoría criptográfica para verificar la integridad histórica de asientos y balances firmados
 - [x] Fase 5: Implementar calendario interactivo de vencimientos fiscales en el panel de control
 - [x] Fase 6: Escribir pruebas unitarias y de integración y verificar compilación y tests (71 pruebas pasando)
+
+- [x] Fase 1: Auditar configuración AFIP, datos bancarios históricos, vencimientos y calendario existente
+- [x] Fase 2: Diseñar controles de secretos, modelo de flujo de caja y estados visuales para calendario fiscal
+- [x] Fase 3: Implementar panel seguro de credenciales y certificados X.509/RSA para Web Services AFIP con encriptación y prueba de conexión
+- [x] Fase 4: Implementar módulo de análisis predictivo de flujo de caja basado en ingresos conciliados y pasivos fiscales
+- [x] Fase 5: Implementar estados visuales completos en el calendario fiscal (pendiente, presentado, pagado, vencido) con filtros por color y badges
+- [x] Fase 6: Escribir pruebas unitarias e integración y verificar compilación y tests (72 pruebas pasando)

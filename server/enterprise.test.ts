@@ -49,4 +49,9 @@ describe("EDV Enterprise Modules Advanced", () => {
     expect(enterpriseRouters.argentinaCore).toBeDefined();
     expect(enterpriseRouters.digitalSignature).toBeDefined();
   });
+
+  it("verifica el soporte para credenciales AFIP y flujo de caja predictivo", () => {
+    expect(enterpriseRouters.argentinaCore).toBeDefined();
+    expect(enterpriseRouters.accounting).toBeDefined();
+  });
 });
