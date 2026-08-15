@@ -36,8 +36,25 @@
 - [x] Agregar prueba Vitest de dashboard.summary con costos diferenciados en la ruta real
 - [x] Implementar servicio de webhooks seguros, firmados e idempotentes para Stripe y Mercado Pago con pruebas unitarias en webhookService.test.ts
 - [x] Diseñar el mapa integral de 7 órganos y 21 células agente especializadas para cubrir la operación contable, fiscal, financiera, de recursos humanos y comercial de una empresa en EDV (registrado en EDV_Enterprise_Agents_Map.md)
-- [ ] Crear vistas dedicadas por órgano con métricas, tareas, alertas y agentes activos
-- [ ] Ampliar el catálogo de agentes EDV desde las 4 células actuales hacia una red especializada por área
-- [ ] Agregar reglas del ADN con convenio, jurisdicción, período, vigencia y prioridad
-- [ ] Implementar conexión segura a feeds bancarios y conciliación idempotente
-- [ ] Probar escenarios completos por órgano y documentar conexiones externas requeridas
+- [x] Crear vistas dedicadas por órgano con métricas, tareas, alertas y agentes activos
+- [x] Ampliar el catálogo de agentes EDV desde las 4 células actuales hacia una red especializada por área
+- [x] Agregar reglas del ADN con convenio, jurisdicción, período, vigencia y prioridad
+- [x] Implementar conexión segura a feeds bancarios y conciliación idempotente
+- [x] Probar escenarios completos por órgano y documentar conexiones externas requeridas
+
+- [x] Crear flujo visual seguro de conexión Open Banking con selección de banco, autorización y estados de sincronización simulados
+- [x] Implementar panel de control RBAC con menús y accesos diferenciados para Socio/CPN y Cliente Final
+- [x] Diseñar pantalla de aprobación documental con vista de balance, firma digital simulada y feedback auditable
+- [x] Agregar estado de error y recuperación en OpenBanking.tsx para fallos de banking.createConnection
+- [x] Aplicar RBAC real al layout y rutas usando el rol de sesión
+- [x] Aplicar enforcement backend para RBAC en banca, aprobaciones y firma, con pruebas de autorización por rol
+- [x] Agregar pruebas de integración por órgano y documentar evidencia de cada flujo representativo
+- [x] Añadir pruebas backend reales de autorización RBAC para banca, aprobación y firma por rol
+- [x] Agregar siete escenarios de integración representativos, uno por órgano, con entradas, salidas y dependencias documentadas
+- [x] Ampliar EDV_Integration_Coverage.md con el mapeo de cada escenario y su resultado esperado
+- [x] Implementar siete pruebas de integración funcionales, una por órgano, con entradas y salidas verificables
+- [x] Enlazar cada escenario declarativo de shared/organScenarios.ts a una prueba funcional concreta
+- [x] Implementar siete pruebas de integración reales invocando routers o servicios representativos de cada órgano
+- [x] Enlazar cada escenario declarativo con código integrado del órgano correspondiente y verificar salidas observables
+- [x] Vincular shared/organScenarios.ts con las siete pruebas de routers reales
+- [x] Asertar que cada escenario declarativo produce una salida observable desde su router o servicio asociado

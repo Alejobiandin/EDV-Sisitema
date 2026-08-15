@@ -1,4 +1,4 @@
-import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
+import { partnerProcedure, protectedProcedure, publicProcedure, router } from "../_core/trpc";
 import { createTask, getTask, updateTask, deleteTask, listTasks, listTaskExecutions, approveTask, rejectTask } from "../db";
 import { z } from "zod";
 
@@ -51,7 +51,7 @@ export const tasksRouter = router({
       return listTaskExecutions(input.taskId);
     }),
 
-  approve: protectedProcedure
+  approve: partnerProcedure
     .input(z.object({
       taskId: z.number(),
       comment: z.string().max(1000).optional(),
@@ -60,7 +60,7 @@ export const tasksRouter = router({
       return approveTask(input.taskId, ctx.user.id, input.comment);
     }),
 
-  reject: protectedProcedure
+  reject: partnerProcedure
     .input(z.object({
       taskId: z.number(),
       comment: z.string().min(3).max(1000),

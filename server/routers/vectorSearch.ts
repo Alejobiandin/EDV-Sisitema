@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { protectedProcedure, router } from "../_core/trpc";
+import { partnerProcedure, protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { edvVectorMemory, edvCertificates, edvInvoices, tasks, organizationalDnaRules, organizationalDnaPolicies } from "../../drizzle/schema";
 import { eq, desc } from "drizzle-orm";
@@ -40,7 +40,7 @@ export const vectorSearchRouter = router({
       return matches.sort((a, b) => b.score - a.score).slice(0, 5);
     }),
 
-  signAndCertifyReport: protectedProcedure
+  signAndCertifyReport: partnerProcedure
     .input(z.object({ taskId: z.number(), recipientEmail: z.string().email() }))
     .mutation(async ({ input }) => {
       const db = await getDb();

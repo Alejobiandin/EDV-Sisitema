@@ -1,4 +1,5 @@
 import { useAuth } from "@/_core/hooks/useAuth";
+import { resolveEdvRole } from "../../../shared/rbac";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -21,18 +22,21 @@ import {
 } from "@/components/ui/sidebar";
 import { startLogin } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { Banknote, Bot, BriefcaseBusiness, LayoutDashboard, Landmark, LogOut, PanelLeft } from "lucide-react";
+import { Banknote, Bot, BriefcaseBusiness, FileCheck2, LayoutDashboard, Landmark, LogOut, PanelLeft, ShieldCheck } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
 
 const menuItems = [
-  { icon: LayoutDashboard, label: "Visión general", path: "/" },
-  { icon: BriefcaseBusiness, label: "Clientes y empleados", path: "/maestros" },
-  { icon: Bot, label: "Asistente y Red ADN", path: "/asistente" },
-  { icon: Landmark, label: "Órganos operativos", path: "/organos" },
-  { icon: Banknote, label: "Banca y conciliación", path: "/banca" },
+  { icon: LayoutDashboard, label: "Visión general", path: "/", audience: "all" },
+  { icon: BriefcaseBusiness, label: "Clientes y empleados", path: "/maestros", audience: "internal" },
+  { icon: Bot, label: "Asistente y Red ADN", path: "/asistente", audience: "internal" },
+  { icon: Landmark, label: "Órganos operativos", path: "/organos", audience: "internal" },
+  { icon: Banknote, label: "Banca y conciliación", path: "/banca", audience: "internal" },
+  { icon: Landmark, label: "Conectar Open Banking", path: "/open-banking", audience: "internal" },
+  { icon: ShieldCheck, label: "Panel RBAC", path: "/rbac", audience: "internal" },
+  { icon: FileCheck2, label: "Aprobaciones y documentos", path: "/aprobaciones", audience: "all" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
@@ -112,9 +116,11 @@ function DashboardLayoutContent({
   const [location, setLocation] = useLocation();
   const { state, toggleSidebar } = useSidebar();
   const isCollapsed = state === "collapsed";
+  const currentRole = resolveEdvRole(user?.role);
+  const visibleMenuItems = menuItems.filter(item => item.audience === "all" || item.audience === currentRole || (currentRole === "partner" && item.audience === "internal"));
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
-  const activeMenuItem = menuItems.find(item => item.path === location);
+  const activeMenuItem = visibleMenuItems.find(item => item.path === location);
   const isMobile = useIsMobile();
 
   useEffect(() => {
@@ -182,7 +188,7 @@ function DashboardLayoutContent({
 
           <SidebarContent className="gap-0">
             <SidebarMenu className="px-2 py-1">
-              {menuItems.map(item => {
+              {visibleMenuItems.map(item => {
                 const isActive = location === item.path;
                 return (
                   <SidebarMenuItem key={item.path}>

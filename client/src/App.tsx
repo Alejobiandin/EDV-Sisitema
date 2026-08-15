@@ -6,6 +6,9 @@ import ClientRegistry from "@/pages/ClientRegistry";
 import DnaAssistant from "@/pages/DnaAssistant";
 import Organs from "@/pages/Organs";
 import Banking from "@/pages/Banking";
+import OpenBanking from "@/pages/OpenBanking";
+import RoleDashboard from "@/pages/RoleDashboard";
+import Approvals from "@/pages/Approvals";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
@@ -18,6 +21,9 @@ function Router() {
       <Route path="/asistente" component={DnaAssistant} />
       <Route path="/organos" component={Organs} />
       <Route path="/banca" component={Banking} />
+      <Route path="/open-banking" component={OpenBanking} />
+      <Route path="/rbac" component={RoleDashboard} />
+      <Route path="/aprobaciones" component={Approvals} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

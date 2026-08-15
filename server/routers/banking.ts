@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { protectedProcedure, router } from "../_core/trpc";
+import { partnerProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { bankConnections, bankTransactions, edvInvoices, auditLog } from "../../drizzle/schema";
 import { desc, eq } from "drizzle-orm";
@@ -14,7 +14,7 @@ export const feedTransaction = z.object({
 });
 
 export const bankingRouter = router({
-  createConnection: protectedProcedure
+  createConnection: partnerProcedure
     .input(z.object({ name: z.string().min(2), institution: z.string().min(2), provider: z.string().min(2), accountMasked: z.string().optional(), secretRef: z.string().min(2) }))
     .mutation(async ({ input }) => {
       const db = await getDb();
@@ -23,20 +23,20 @@ export const bankingRouter = router({
       return { success: true, connectionId: Number(inserted[0].insertId) };
     }),
 
-  listConnections: protectedProcedure.query(async () => {
+  listConnections: partnerProcedure.query(async () => {
     const db = await getDb();
     if (!db) return [];
     const rows = await db.select().from(bankConnections).orderBy(desc(bankConnections.updatedAt));
     return rows.map(({ secretRef: _secretRef, ...safeConnection }) => safeConnection);
   }),
 
-  listInvoices: protectedProcedure.query(async () => {
+  listInvoices: partnerProcedure.query(async () => {
     const db = await getDb();
     if (!db) return [];
     return db.select().from(edvInvoices).orderBy(desc(edvInvoices.createdAt));
   }),
 
-  listTransactions: protectedProcedure
+  listTransactions: partnerProcedure
     .input(z.object({ connectionId: z.number().optional(), status: z.enum(["unmatched", "matched", "ignored", "review"]).optional() }).optional())
     .query(async ({ input }) => {
       const db = await getDb();
@@ -45,7 +45,7 @@ export const bankingRouter = router({
       return rows.filter(row => (!input?.connectionId || row.bankConnectionId === input.connectionId) && (!input?.status || row.status === input.status));
     }),
 
-  importFeed: protectedProcedure
+  importFeed: partnerProcedure
     .input(z.object({ connectionId: z.number(), transactions: z.array(feedTransaction).min(1).max(5000) }))
     .mutation(async ({ input }) => {
       const db = await getDb();
@@ -79,7 +79,7 @@ export const bankingRouter = router({
       return { success: true, importedCount };
     }),
 
-  reconcile: protectedProcedure
+  reconcile: partnerProcedure
     .input(z.object({ transactionId: z.number(), invoiceId: z.number() }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
