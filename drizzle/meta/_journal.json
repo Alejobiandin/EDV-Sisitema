@@ -64,6 +64,13 @@
       "when": 1786758317440,
       "tag": "0008_violet_caretaker",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "5",
+      "when": 1786758421604,
+      "tag": "0009_cute_talisman",
+      "breakpoints": true
     }
   ]
 }

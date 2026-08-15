@@ -316,3 +316,13 @@ export const taxConfigurations = mysqlTable("tax_configurations", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
+
+export const taxSyncLogs = mysqlTable("tax_sync_logs", {
+  id: int("id").autoincrement().primaryKey(),
+  organizationId: int("organization_id").notNull(),
+  syncType: varchar("sync_type", { length: 50 }).notNull(), // points_of_sale, wsaa_auth, invoice_cae
+  status: varchar("status", { length: 32 }).notNull(), // success, error
+  details: text("details"),
+  errorMessage: text("error_message"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
