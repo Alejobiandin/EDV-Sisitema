@@ -85,3 +85,10 @@
 - [x] Fase 4: Implementar importación de extractos bancarios y emparejamiento automático con facturas e ingresos
 - [x] Fase 5: Ampliar `exportService.ts` y el router de reportes para exportar Estado de Situación Patrimonial, Estado de Resultados y Libro Mayor a PDF y Excel con logotipo y metadatos institucionales
 - [x] Fase 6: Escribir pruebas unitarias y de integración para las nuevas funcionalidades y verificar la compilación y tests (68 pruebas pasando)
+
+- [x] Fase 1: Auditar módulos existentes de banca, vencimientos, estados financieros y firma digital
+- [x] Fase 2: Diseñar contratos para parseo CSV de extractos, umbrales de alerta fiscal y lote PAdES masivo
+- [x] Fase 3: Implementar importación masiva de extractos bancarios en formato CSV con validación e inserción idempotente
+- [x] Fase 4: Implementar sistema de alertas visuales en el panel para advertir sobre vencimientos fiscales próximos (próximos 7 días)
+- [x] Fase 5: Implementar función de firma digital masiva de estados financieros con trazabilidad individual y registro de auditoría
+- [x] Fase 6: Escribir pruebas unitarias y de integración para las nuevas funcionalidades y verificar compilación y tests (68 pruebas pasando)

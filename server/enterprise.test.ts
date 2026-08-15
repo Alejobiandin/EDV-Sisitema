@@ -35,4 +35,8 @@ describe("EDV Enterprise Modules Advanced", () => {
     expect(employee).toBe(255000);
     expect(total).toBe(615000);
   });
+
+  it("verifica la existencia del procedimiento de firma masiva de estados financieros", () => {
+    expect(enterpriseRouters.digitalSignature.signBulkFinancialStatements).toBeDefined();
+  });
 });
