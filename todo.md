@@ -78,3 +78,10 @@
 - [x] Fase 5: Integrar el servicio de firma digital con soporte PAdES y estampa de tiempo (TSA) para certificaciones y balances
 - [x] Fase 6: Implementar el núcleo argentino productivo (sincronización ARCA/AFIP, liquidación de F.931 con CCT 130/75, control de vencimientos fiscales y emisión de facturación electrónica con CAE)
 - [x] Fase 7: Escribir pruebas unitarias y de integración Vitest para todos los módulos nuevos y validar la compilación y despliegue local
+
+- [x] Fase 1: Auditar routers, modelos y componentes para vencimientos, banca y reportes contables
+- [x] Fase 2: Diseñar contratos tRPC y lógica de emparejamiento bancario automático e importación de extractos
+- [x] Fase 3: Crear el panel interactivo de vencimientos y alertas AFIP con filtros y estados de cumplimiento
+- [x] Fase 4: Implementar importación de extractos bancarios y emparejamiento automático con facturas e ingresos
+- [x] Fase 5: Ampliar `exportService.ts` y el router de reportes para exportar Estado de Situación Patrimonial, Estado de Resultados y Libro Mayor a PDF y Excel con logotipo y metadatos institucionales
+- [x] Fase 6: Escribir pruebas unitarias y de integración para las nuevas funcionalidades y verificar la compilación y tests (68 pruebas pasando)

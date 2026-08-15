@@ -39,6 +39,20 @@ describe("exportService", () => {
   it("genera un XLSX de salarios como archivo ZIP OpenXML", async () => {
     const buffer = await generateExcelReport(payrollPayload);
     expect(buffer.length).toBeGreaterThan(500);
-    expect(buffer.subarray(0, 2).toString("hex")).toBe("504b");
+    expect(buffer[0]).toBe(0x50); // PK zip header
+    expect(buffer[1]).toBe(0x4b);
+  });
+
+  it("genera PDF y XLSX para el Balance General (Estado de Situación Patrimonial)", async () => {
+    const payload = {
+      reportType: "balance_sheet" as const,
+      clientName: "Empresa Demo",
+      period: "2026-07",
+      data: { assets: 15_000_000, liabilities: 5_000_000, equity: 10_000_000 },
+    };
+    const pdfBuffer = await generatePdfReport(payload);
+    const excelBuffer = await generateExcelReport(payload);
+    expect(pdfBuffer.length).toBeGreaterThan(500);
+    expect(excelBuffer.length).toBeGreaterThan(500);
   });
 });

@@ -2,7 +2,7 @@ import ExcelJS from "exceljs";
 import PDFDocument from "pdfkit";
 
 export type ExportReportPayload = {
-  reportType: "tax" | "payroll" | "managerial_vat";
+  reportType: "tax" | "payroll" | "managerial_vat" | "balance_sheet" | "income_statement" | "general_ledger";
   clientName: string;
   period: string;
   data: Record<string, unknown>;
@@ -16,9 +16,20 @@ export async function generateExcelReport(payload: ExportReportPayload): Promise
   const workbook = new ExcelJS.Workbook();
   workbook.creator = payload.companyName ?? "EDV - Sistema Organizacional Cognitivo";
   workbook.created = new Date();
-  const sheet = workbook.addWorksheet(
-    payload.reportType === "managerial_vat" ? "Ventas e IVA por PV" : payload.reportType === "tax" ? "Determinación IVA EDV" : "Liquidación Haberes EDV"
-  );
+  const sheetName =
+    payload.reportType === "balance_sheet"
+      ? "Estado Patrimonial"
+      : payload.reportType === "income_statement"
+        ? "Estado de Resultados"
+        : payload.reportType === "general_ledger"
+          ? "Libro Mayor"
+          : payload.reportType === "managerial_vat"
+            ? "Ventas e IVA por PV"
+            : payload.reportType === "tax"
+              ? "Determinación IVA EDV"
+              : "Liquidación Haberes EDV";
+
+  const sheet = workbook.addWorksheet(sheetName);
 
   sheet.columns = [
     { header: "Concepto / Parámetro Institucional", key: "concept", width: 40 },
@@ -45,7 +56,26 @@ export async function generateExcelReport(payload: ExportReportPayload): Promise
   sheet.addRow({ concept: "", value: "" });
 
   const data = payload.data;
-  if (payload.reportType === "managerial_vat") {
+  if (payload.reportType === "balance_sheet") {
+    sheet.addRow({ concept: "Rubro Patrimonial", value: "Saldo Contable ($)" });
+    sheet.addRow({ concept: "Total Activo", value: data.assets ?? 0 });
+    sheet.addRow({ concept: "Total Pasivo", value: data.liabilities ?? 0 });
+    sheet.addRow({ concept: "Patrimonio Neto", value: data.equity ?? 0 });
+  } else if (payload.reportType === "income_statement") {
+    sheet.addRow({ concept: "Concepto de Resultados", value: "Importe ($)" });
+    sheet.addRow({ concept: "Ingresos Totales", value: data.revenue ?? 0 });
+    sheet.addRow({ concept: "Gastos Operativos", value: data.expenses ?? 0 });
+    sheet.addRow({ concept: "Resultado Neto del Ejercicio", value: data.netIncome ?? 0 });
+  } else if (payload.reportType === "general_ledger") {
+    sheet.addRow({ concept: "Fecha / Detalle", value: "Débito / Crédito / Saldo" });
+    const movements = (data.movements as Array<{ date: string; description: string; debit: number; credit: number; runningBalance: number }>) ?? [];
+    for (const m of movements) {
+      sheet.addRow({
+        concept: `${new Date(m.date).toLocaleDateString()} - ${m.description}`,
+        value: `Debe: $${m.debit.toFixed(2)} | Haber: $${m.credit.toFixed(2)} | Saldo: $${m.runningBalance.toFixed(2)}`,
+      });
+    }
+  } else if (payload.reportType === "managerial_vat") {
     sheet.addRow({ concept: "Punto de Venta", value: "Comprobantes / Neto / IVA" });
     const byPos = (data.byPos as Array<{ pointOfSale: number; count: number; net: number; vat: number; gross: number }>) ?? [];
     for (const p of byPos) {
@@ -91,7 +121,85 @@ export async function generatePdfReport(payload: ExportReportPayload): Promise<B
       .text(`${payload.companyName ?? "Estudio Contable EDV S.A."}  ·  ${payload.companyTaxId ?? "CUIT: 30-71458921-4"}`, 65, 82);
     doc.moveDown(3);
 
-    if (payload.reportType === "managerial_vat") {
+    if (payload.reportType === "balance_sheet") {
+      doc.fontSize(16).fillColor("#1E3A8A").text("Estado de Situación Patrimonial (Balance General)", 50, 130);
+      doc.fontSize(10).fillColor("#475569").text(`Organización: ${payload.companyName ?? "Estudio Contable EDV"}`, 50, 155);
+      doc.text(`Período: ${payload.period}`, 50, 170);
+
+      let y = 205;
+      doc.rect(50, y, 495, 22).fill("#F1F5F9");
+      doc.fontSize(9).fillColor("#0F172A").text("Rubro Contable", 60, y + 6);
+      doc.text("Importe Consolidado ($)", 320, y + 6);
+      y += 28;
+
+      const data = payload.data;
+      const rows = [
+        { label: "Total Activo (Corriente + No Corriente)", value: data.assets ?? 0 },
+        { label: "Total Pasivo (Deudas Ciertas y Contingentes)", value: data.liabilities ?? 0 },
+        { label: "Patrimonio Neto (Capital + Resultados Acumulados)", value: data.equity ?? 0 },
+      ];
+
+      for (const r of rows) {
+        doc.fontSize(9.5).fillColor("#334155").text(r.label, 60, y);
+        doc.text(`$${Number(r.value).toLocaleString("es-AR", { maximumFractionDigits: 2 })}`, 320, y);
+        y += 24;
+      }
+
+      doc.end();
+    } else if (payload.reportType === "income_statement") {
+      doc.fontSize(16).fillColor("#1E3A8A").text("Estado de Resultados (Pérdidas y Ganancias)", 50, 130);
+      doc.fontSize(10).fillColor("#475569").text(`Organización: ${payload.companyName ?? "Estudio Contable EDV"}`, 50, 155);
+      doc.text(`Período: ${payload.period}`, 50, 170);
+
+      let y = 205;
+      doc.rect(50, y, 495, 22).fill("#F1F5F9");
+      doc.fontSize(9).fillColor("#0F172A").text("Concepto", 60, y + 6);
+      doc.text("Importe ($)", 320, y + 6);
+      y += 28;
+
+      const data = payload.data;
+      const rows = [
+        { label: "Ingresos Operativos Totales", value: data.revenue ?? 0 },
+        { label: "Gastos Operativos y Administrativos", value: data.expenses ?? 0 },
+        { label: "Resultado Neto del Ejercicio", value: data.netIncome ?? 0 },
+      ];
+
+      for (const r of rows) {
+        doc.fontSize(9.5).fillColor("#334155").text(r.label, 60, y);
+        doc.text(`$${Number(r.value).toLocaleString("es-AR", { maximumFractionDigits: 2 })}`, 320, y);
+        y += 24;
+      }
+
+      doc.end();
+    } else if (payload.reportType === "general_ledger") {
+      doc.fontSize(16).fillColor("#1E3A8A").text("Libro Mayor Contable", 50, 130);
+      doc.fontSize(10).fillColor("#475569").text(`Organización: ${payload.companyName ?? "Estudio Contable EDV"}`, 50, 155);
+      doc.text(`Período: ${payload.period}`, 50, 170);
+
+      let y = 205;
+      doc.rect(50, y, 495, 22).fill("#F1F5F9");
+      doc.fontSize(9).fillColor("#0F172A").text("Fecha / Detalle", 60, y + 6);
+      doc.text("Debe", 280, y + 6);
+      doc.text("Haber", 370, y + 6);
+      doc.text("Saldo", 460, y + 6);
+      y += 24;
+
+      const data = payload.data;
+      const movements = (data.movements as Array<{ date: string; description: string; debit: number; credit: number; runningBalance: number }>) ?? [];
+      for (const m of movements) {
+        if (y > 750) {
+          doc.addPage();
+          y = 50;
+        }
+        doc.fontSize(8.5).fillColor("#334155").text(`${new Date(m.date).toLocaleDateString()} - ${m.description}`, 60, y, { width: 210 });
+        doc.text(`$${m.debit.toFixed(2)}`, 280, y);
+        doc.text(`$${m.credit.toFixed(2)}`, 370, y);
+        doc.text(`$${m.runningBalance.toFixed(2)}`, 460, y);
+        y += 20;
+      }
+
+      doc.end();
+    } else if (payload.reportType === "managerial_vat") {
       doc.fontSize(16).fillColor("#1E3A8A").text("Reporte Gerencial: Ventas e IVA por Punto de Venta", 50, 130);
       doc.fontSize(10).fillColor("#475569").text(`Organización: ${payload.companyName ?? "Estudio Contable EDV"}`, 50, 155);
       doc.text(`Período: ${payload.period}`, 50, 170);
