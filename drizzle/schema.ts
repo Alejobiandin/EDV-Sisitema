@@ -307,6 +307,8 @@ export const taxConfigurations = mysqlTable("tax_configurations", {
   environment: varchar("environment", { length: 32 }).default("homologation").notNull(), // homologation, production
   cuit: varchar("cuit", { length: 50 }).notNull(),
   pointOfSale: int("point_of_sale").default(1).notNull(),
+  autoEmitOnApproval: int("auto_emit_on_approval").default(0).notNull(), // 0 = false, 1 = true
+  syncedPointsOfSale: text("synced_points_of_sale"), // JSON string with synced POS list
   certStorageKey: varchar("cert_storage_key", { length: 512 }),
   keyStorageKey: varchar("key_storage_key", { length: 512 }),
   status: varchar("status", { length: 32 }).default("pending_verification").notNull(),

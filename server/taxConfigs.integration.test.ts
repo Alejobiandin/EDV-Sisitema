@@ -53,13 +53,18 @@ describe("EDV Tax Configurations Router", () => {
       cuit: "30-71234567-9",
       environment: "homologation",
       pointOfSale: 1,
-      certContent: "CERTIFICATE",
-      keyContent: "KEY",
+      autoEmitOnApproval: true,
+      certContent: "-----BEGIN CERTIFICATE-----\nFAKE\n-----END CERTIFICATE-----",
+      keyContent: "-----BEGIN PRIVATE KEY-----\nFAKE\n-----END PRIVATE KEY-----",
     });
     expect(saveRes.success).toBe(true);
 
     const config = await caller.get({ organizationId: 1 });
-    expect(config).toMatchObject({ cuit: "30-71234567-9", environment: "homologation", pointOfSale: 1 });
+    expect(config).toMatchObject({ cuit: "30-71234567-9", environment: "homologation", pointOfSale: 1, autoEmitOnApproval: 1 });
+
+    const syncRes = await caller.syncPointsOfSale({ organizationId: 1 });
+    expect(syncRes.success).toBe(true);
+    expect(syncRes.points).toHaveLength(3);
 
     const verifyRes = await caller.verifyConnection({ organizationId: 1 });
     expect(verifyRes.success).toBe(true);

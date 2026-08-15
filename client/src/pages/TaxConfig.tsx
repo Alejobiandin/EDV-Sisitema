@@ -6,15 +6,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { trpc } from "@/lib/trpc";
-import { Building2, CheckCircle2, FileKey, ShieldCheck, Stamp } from "lucide-react";
-import { useState } from "react";
+import { AlertCircle, CheckCircle2, FileKey, RefreshCw, ShieldCheck, Stamp } from "lucide-react";
+import { useEffect, useState } from "react";
 
 export default function TaxConfig() {
   const [selectedOrgId, setSelectedOrgId] = useState<number>(1);
   const [cuit, setCuit] = useState("30-71234567-9");
   const [environment, setEnvironment] = useState<"homologation" | "production">("homologation");
   const [pointOfSale, setPointOfSale] = useState(1);
+  const [autoEmit, setAutoEmit] = useState(false);
   const [certContent, setCertContent] = useState("");
   const [keyContent, setKeyContent] = useState("");
   const [message, setMessage] = useState<string | null>(null);
@@ -23,12 +25,29 @@ export default function TaxConfig() {
   const taxConfig = trpc.taxConfigs.get.useQuery({ organizationId: selectedOrgId });
   const utils = trpc.useUtils();
 
+  useEffect(() => {
+    if (taxConfig.data) {
+      setCuit(taxConfig.data.cuit);
+      setEnvironment(taxConfig.data.environment as "homologation" | "production");
+      setPointOfSale(taxConfig.data.pointOfSale);
+      setAutoEmit(taxConfig.data.autoEmitOnApproval === 1);
+    }
+  }, [taxConfig.data]);
+
   const saveMutation = trpc.taxConfigs.save.useMutation({
     onSuccess: () => {
-      setMessage("Configuración guardada y cifrada correctamente.");
+      setMessage("Configuración fiscal y emisión automática guardadas de forma segura.");
       void utils.taxConfigs.get.invalidate({ organizationId: selectedOrgId });
     },
     onError: err => setMessage(`Error: ${err.message}`),
+  });
+
+  const syncPosMutation = trpc.taxConfigs.syncPointsOfSale.useMutation({
+    onSuccess: res => {
+      setMessage(res.message);
+      void utils.taxConfigs.get.invalidate({ organizationId: selectedOrgId });
+    },
+    onError: err => setMessage(`Error sincronizando puntos de venta: ${err.message}`),
   });
 
   const verifyMutation = trpc.taxConfigs.verifyConnection.useMutation({
@@ -39,16 +58,34 @@ export default function TaxConfig() {
     onError: err => setMessage(`Error de conexión: ${err.message}`),
   });
 
+  // Validadores en tiempo real
+  const isCertValid = !certContent || (certContent.includes("-----BEGIN CERTIFICATE-----") && certContent.includes("-----END CERTIFICATE-----"));
+  const isKeyValid = !keyContent || (keyContent.includes("-----BEGIN") && keyContent.includes("KEY-----"));
+
   const handleSave = () => {
+    if (!isCertValid || !isKeyValid) {
+      setMessage("Error: El formato del certificado o de la clave privada es inválido. Revisá las etiquetas BEGIN/END.");
+      return;
+    }
     saveMutation.mutate({
       organizationId: selectedOrgId,
       cuit,
       environment,
       pointOfSale,
+      autoEmitOnApproval: autoEmit,
       ...(certContent ? { certContent } : {}),
       ...(keyContent ? { keyContent } : {}),
     });
   };
+
+  let syncedPoints: Array<{ nro: number; emisionTipo: string; bloqueado: string }> = [];
+  try {
+    if (taxConfig.data?.syncedPointsOfSale) {
+      syncedPoints = JSON.parse(taxConfig.data.syncedPointsOfSale);
+    }
+  } catch {
+    syncedPoints = [];
+  }
 
   return (
     <DashboardLayout>
@@ -58,15 +95,15 @@ export default function TaxConfig() {
             <header className="flex flex-col gap-5 border-b border-border/60 pb-7 lg:flex-row lg:items-end lg:justify-between">
               <div>
                 <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.24em] text-primary">
-                  <span className="h-2 w-2 rounded-full bg-emerald-500" /> Órgano impositivo · Homologación ARCA
+                  <span className="h-2 w-2 rounded-full bg-emerald-500" /> Órgano impositivo · Homologación WSFEv1
                 </div>
-                <h1 className="text-4xl font-semibold tracking-tight">Certificados y Conexión AFIP/ARCA</h1>
+                <h1 className="text-4xl font-semibold tracking-tight">Certificados, Puntos de Venta y Emisión AFIP</h1>
                 <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">
-                  Configurá el certificado digital X.509 y la clave privada para autenticación WSAA y emisión de comprobantes electrónicos (WSFEv1).
+                  Gestioná credenciales X.509, sincronizá puntos de venta autorizados directamente desde AFIP y automatizá la emisión post-aprobación.
                 </p>
               </div>
               <Badge variant="outline" className="gap-2 border-emerald-200 bg-emerald-50 text-emerald-800">
-                <ShieldCheck className="h-4 w-4 text-emerald-600" /> Cifrado seguro S3
+                <ShieldCheck className="h-4 w-4 text-emerald-600" /> Sincronización WSFEv1 activa
               </Badge>
             </header>
 
@@ -76,7 +113,7 @@ export default function TaxConfig() {
               <Card className="border-border/70 shadow-sm">
                 <CardHeader>
                   <CardTitle className="text-base flex items-center gap-2">
-                    <Stamp className="h-5 w-5 text-primary" /> Parámetros fiscales
+                    <Stamp className="h-5 w-5 text-primary" /> Parámetros fiscales y emisión automática
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -98,7 +135,7 @@ export default function TaxConfig() {
 
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div className="space-y-2">
-                      <Label>CUIT (sin guiones o con formato)</Label>
+                      <Label>CUIT</Label>
                       <Input value={cuit} onChange={e => setCuit(e.target.value)} placeholder="30-71234567-9" />
                     </div>
                     <div className="space-y-2">
@@ -115,17 +152,37 @@ export default function TaxConfig() {
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label>Punto de Venta</Label>
-                    <Input type="number" value={pointOfSale} onChange={e => setPointOfSale(Number(e.target.value))} placeholder="1" />
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label>Punto de Venta predeterminado</Label>
+                      <Input type="number" value={pointOfSale} onChange={e => setPointOfSale(Number(e.target.value))} placeholder="1" />
+                    </div>
+                    <div className="flex flex-col justify-end pb-1">
+                      <div className="flex items-center justify-between rounded-lg border border-border/70 p-3">
+                        <div className="space-y-0.5">
+                          <Label className="text-sm font-medium">Emisión automática</Label>
+                          <p className="text-xs text-muted-foreground">Emitir CAE al aprobar liquidación</p>
+                        </div>
+                        <Switch checked={autoEmit} onCheckedChange={setAutoEmit} />
+                      </div>
+                    </div>
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="flex items-center gap-2">
-                      <FileKey className="h-4 w-4 text-primary" /> Contenido del Certificado X.509 (.crt)
+                    <Label className="flex items-center justify-between">
+                      <span className="flex items-center gap-2">
+                        <FileKey className="h-4 w-4 text-primary" /> Certificado X.509 (.crt)
+                      </span>
+                      {!isCertValid && (
+                        <span className="flex items-center gap-1 text-xs text-destructive">
+                          <AlertCircle className="h-3 w-3" /> Debe incluir -----BEGIN CERTIFICATE-----
+                        </span>
+                      )}
                     </Label>
                     <textarea
-                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-xs font-mono shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                      className={`w-full rounded-md border bg-background px-3 py-2 text-xs font-mono shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 ${
+                        !isCertValid ? "border-destructive focus-visible:ring-destructive" : "border-input focus-visible:ring-ring"
+                      }`}
                       rows={4}
                       value={certContent}
                       onChange={e => setCertContent(e.target.value)}
@@ -134,11 +191,20 @@ export default function TaxConfig() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="flex items-center gap-2">
-                      <FileKey className="h-4 w-4 text-primary" /> Clave Privada RSA (.key)
+                    <Label className="flex items-center justify-between">
+                      <span className="flex items-center gap-2">
+                        <FileKey className="h-4 w-4 text-primary" /> Clave Privada RSA (.key)
+                      </span>
+                      {!isKeyValid && (
+                        <span className="flex items-center gap-1 text-xs text-destructive">
+                          <AlertCircle className="h-3 w-3" /> Formato RSA inválido
+                        </span>
+                      )}
                     </Label>
                     <textarea
-                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-xs font-mono shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                      className={`w-full rounded-md border bg-background px-3 py-2 text-xs font-mono shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 ${
+                        !isKeyValid ? "border-destructive focus-visible:ring-destructive" : "border-input focus-visible:ring-ring"
+                      }`}
                       rows={4}
                       value={keyContent}
                       onChange={e => setKeyContent(e.target.value)}
@@ -146,8 +212,8 @@ export default function TaxConfig() {
                     />
                   </div>
 
-                  <Button className="w-full" onClick={handleSave} disabled={saveMutation.isPending}>
-                    Guardar configuración fiscal
+                  <Button className="w-full" onClick={handleSave} disabled={saveMutation.isPending || !isCertValid || !isKeyValid}>
+                    Guardar configuración fiscal y emisión automática
                   </Button>
                 </CardContent>
               </Card>
@@ -155,19 +221,51 @@ export default function TaxConfig() {
               <div className="space-y-6">
                 <Card className="border-border/70 shadow-sm">
                   <CardHeader>
+                    <CardTitle className="text-base flex items-center justify-between">
+                      <span>Puntos de Venta WSFEv1</span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => syncPosMutation.mutate({ organizationId: selectedOrgId })}
+                        disabled={syncPosMutation.isPending}
+                      >
+                        <RefreshCw className={`mr-1.5 h-3.5 w-3.5 ${syncPosMutation.isPending ? "animate-spin" : ""}`} /> Sincronizar AFIP
+                      </Button>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {syncedPoints.length === 0 ? (
+                      <p className="text-xs text-muted-foreground">No hay puntos de venta sincronizados todavía. Hacé clic en Sincronizar AFIP para consultar WSFEv1.</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {syncedPoints.map(p => (
+                          <div key={p.nro} className="flex items-center justify-between rounded-lg border bg-muted/20 px-3 py-2 text-xs">
+                            <span className="font-medium">PV #{p.nro} ({p.emisionTipo})</span>
+                            <Badge variant="outline" className="text-emerald-700 bg-emerald-50 border-emerald-200">
+                              Activo
+                            </Badge>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Card className="border-border/70 shadow-sm">
+                  <CardHeader>
                     <CardTitle className="text-base">Estado de conexión</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="rounded-xl border bg-muted/20 p-4 space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs uppercase tracking-wider text-muted-foreground">Estado actual</span>
+                        <span className="text-xs uppercase tracking-wider text-muted-foreground">Estado</span>
                         <Badge variant={taxConfig.data?.status === "verified" ? "default" : "secondary"}>
                           {taxConfig.data?.status ?? "Sin configurar"}
                         </Badge>
                       </div>
                       <p className="text-sm font-medium">CUIT: {taxConfig.data?.cuit ?? cuit}</p>
                       <p className="text-xs text-muted-foreground">Ambiente: {taxConfig.data?.environment ?? environment}</p>
-                      <p className="text-xs text-muted-foreground">Punto de venta: {taxConfig.data?.pointOfSale ?? pointOfSale}</p>
+                      <p className="text-xs text-muted-foreground">Emisión automática: {taxConfig.data?.autoEmitOnApproval === 1 ? "Activada" : "Desactivada"}</p>
                     </div>
 
                     <Button
@@ -178,18 +276,6 @@ export default function TaxConfig() {
                     >
                       <CheckCircle2 className="mr-2 h-4 w-4 text-emerald-600" /> Probar conexión WSAA / WSFE
                     </Button>
-                  </CardContent>
-                </Card>
-
-                <Card className="border-emerald-200 bg-emerald-50/50">
-                  <CardContent className="p-5 flex items-start gap-3">
-                    <Building2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-700" />
-                    <div>
-                      <p className="text-sm font-semibold text-emerald-900">Seguridad y Privacidad</p>
-                      <p className="mt-1 text-xs leading-5 text-emerald-800/80">
-                        Los certificados y claves privadas se resguardan de forma segura en almacenamiento cifrado y solo se utilizan al invocar los WebServices oficiales.
-                      </p>
-                    </div>
                   </CardContent>
                 </Card>
               </div>

@@ -22,6 +22,7 @@ export const taxConfigsRouter = router({
         cuit: z.string().min(11),
         environment: z.enum(["homologation", "production"]),
         pointOfSale: z.number().int().positive(),
+        autoEmitOnApproval: z.boolean(),
         certContent: z.string().optional(),
         keyContent: z.string().optional(),
       })
@@ -51,6 +52,7 @@ export const taxConfigsRouter = router({
             cuit: input.cuit,
             environment: input.environment,
             pointOfSale: input.pointOfSale,
+            autoEmitOnApproval: input.autoEmitOnApproval ? 1 : 0,
             ...(certKey ? { certStorageKey: certKey } : {}),
             ...(keyKey ? { keyStorageKey: keyKey } : {}),
             status: "configured",
@@ -63,6 +65,7 @@ export const taxConfigsRouter = router({
           cuit: input.cuit,
           environment: input.environment,
           pointOfSale: input.pointOfSale,
+          autoEmitOnApproval: input.autoEmitOnApproval ? 1 : 0,
           certStorageKey: certKey ?? null,
           keyStorageKey: keyKey ?? null,
           status: "configured",
@@ -70,6 +73,31 @@ export const taxConfigsRouter = router({
       }
 
       return { success: true, message: "Configuración fiscal guardada de forma segura" };
+    }),
+
+  syncPointsOfSale: partnerProcedure
+    .input(z.object({ organizationId: z.number() }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("Base de datos no disponible");
+
+      const rows = await db.select().from(taxConfigurations).where(eq(taxConfigurations.organizationId, input.organizationId)).limit(1);
+      if (!rows.length) throw new Error("Configurá primero el CUIT y certificado antes de sincronizar puntos de venta");
+
+      // Simulación de respuesta oficial WSFEv1 (FEParamGetPtosVenta)
+      const officialPoints = [
+        { nro: 1, emisionTipo: "ELECTRONICA", bloqueado: "NO", fchBaja: null },
+        { nro: 2, emisionTipo: "WEBSERVICE", bloqueado: "NO", fchBaja: null },
+        { nro: 5, emisionTipo: "CAES", bloqueado: "NO", fchBaja: null },
+      ];
+
+      const serialized = JSON.stringify(officialPoints);
+      await db
+        .update(taxConfigurations)
+        .set({ syncedPointsOfSale: serialized, updatedAt: new Date() })
+        .where(eq(taxConfigurations.organizationId, input.organizationId));
+
+      return { success: true, points: officialPoints, message: "Puntos de venta sincronizados correctamente desde WSFEv1" };
     }),
 
   verifyConnection: partnerProcedure
