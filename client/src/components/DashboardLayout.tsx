@@ -27,6 +27,7 @@ import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
+import NotificationCenter from "./NotificationCenter";
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Visión general", path: "/", audience: "all" },
@@ -119,6 +120,7 @@ function DashboardLayoutContent({
   const isCollapsed = state === "collapsed";
   const currentRole = resolveEdvRole(user?.role);
   const visibleMenuItems = menuItems.filter(item => item.audience === "all" || item.audience === currentRole || (currentRole === "partner" && item.audience === "internal"));
+  const canSeePartnerNotifications = currentRole === "partner";
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const activeMenuItem = visibleMenuItems.find(item => item.path === location);
@@ -178,12 +180,13 @@ function DashboardLayoutContent({
                 <PanelLeft className="h-4 w-4 text-muted-foreground" />
               </button>
               {!isCollapsed ? (
-                <div className="flex items-center gap-2 min-w-0">
+                <div className="flex items-center gap-2 min-w-0 flex-1">
                   <span className="font-semibold tracking-tight truncate">
                     EDV · Centro de mando
                   </span>
                 </div>
               ) : null}
+              {canSeePartnerNotifications ? <NotificationCenter userId={user?.id} /> : null}
             </div>
           </SidebarHeader>
 

@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 const fakeDb = {
+  insert: () => ({ values: async () => [{ insertId: 1 }] }),
   select: () => ({
     from: (table: unknown) => {
       // @ts-expect-error table inspection
@@ -34,6 +35,8 @@ describe("EDV Managerial Tax & Email Router", () => {
     const caller = taxConfigsRouter.createCaller(context);
     const report = await caller.getManagerialReport({ organizationId: 1 });
     expect(report).toHaveProperty("byPos");
+    const notice = await caller.notifyManagerialGenerated({ organizationId: 1 });
+    expect(notice.success).toBe(true);
     expect(report).toHaveProperty("totalNet");
     expect(report).toHaveProperty("totalVat");
 

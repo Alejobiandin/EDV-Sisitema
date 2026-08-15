@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { partnerProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
-import { taxConfigurations, taxSyncLogs, edvInvoices, edvClients } from "../../drizzle/schema";
+import { taxConfigurations, taxSyncLogs, notifications, edvInvoices, edvClients } from "../../drizzle/schema";
 import { eq, desc } from "drizzle-orm";
 import { storagePut } from "../storage";
 
@@ -162,6 +162,20 @@ export const taxConfigsRouter = router({
       const totalGross = byPos.reduce((acc, x) => acc + x.gross, 0);
 
       return { byPos, totalNet, totalVat, totalGross };
+    }),
+
+  notifyManagerialGenerated: partnerProcedure
+    .input(z.object({ organizationId: z.number() }))
+    .mutation(async ({ input, ctx }) => {
+      const db = await getDb();
+      if (!db) throw new Error("Base de datos no disponible");
+      await db.insert(notifications).values({
+        userId: ctx.user.id,
+        type: "system_alert",
+        message: `Reporte gerencial de ventas e IVA generado para la organización #${input.organizationId}.`,
+        isRead: 0,
+      });
+      return { success: true, message: "Aviso de generación enviado al centro de notificaciones." };
     }),
 
   sendInvoiceEmail: partnerProcedure

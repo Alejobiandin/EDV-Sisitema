@@ -58,3 +58,15 @@
 - [x] Enlazar cada escenario declarativo con código integrado del órgano correspondiente y verificar salidas observables
 - [x] Vincular shared/organScenarios.ts con las siete pruebas de routers reales
 - [x] Asertar que cada escenario declarativo produce una salida observable desde su router o servicio asociado
+
+- [x] Registrar notificaciones persistentes cuando se genere o exporte un reporte gerencial
+- [x] Mostrar centro visual de notificaciones para socios con estados de lectura
+- [x] Integrar botones de exportación con feedback de notificación y pruebas
+- [x] Ajustar el encabezado del reporte gerencial para apilar botones PDF/Excel en móvil y evitar overflow
+- [x] Registrar una notificación también al generar o consultar un reporte gerencial
+- [x] Invalidar y refrescar inmediatamente las notificaciones después de exportar
+- [x] Agregar cobertura de integración para visibilidad inmediata del aviso post-exportación
+- [x] Agregar una prueba de integración/UI que exporte el reporte gerencial y verifique el aviso visible inmediatamente
+- [x] Cubrir el flujo frontend exportMutation.onSuccess más invalidación de notifications.list
+- [x] Agregar prueba de integración/UI que renderice TaxConfig, dispare exportación y verifique la notificación visible
+- [x] Configurar entorno de test DOM y mocks tRPC para el flujo visual completo

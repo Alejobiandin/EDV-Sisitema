@@ -9,8 +9,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { trpc } from "@/lib/trpc";
+import { handleManagerialReportExportSuccess } from "@/lib/reportExportFeedback";
+import React from "react";
 import { AlertCircle, CheckCircle2, FileKey, Mail, RefreshCw, ShieldCheck, Stamp, TrendingUp, History } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export default function TaxConfig() {
   const [selectedOrgId, setSelectedOrgId] = useState<number>(1);
@@ -22,6 +24,7 @@ export default function TaxConfig() {
   const [keyContent, setKeyContent] = useState("");
   const [clientEmail, setClientEmail] = useState("cliente@empresa.com");
   const [message, setMessage] = useState<string | null>(null);
+  const generationNotifiedRef = useRef<number | null>(null);
 
   const orgs = trpc.organizations.list.useQuery();
   const taxConfig = trpc.taxConfigs.get.useQuery({ organizationId: selectedOrgId });
@@ -71,9 +74,30 @@ export default function TaxConfig() {
     onError: err => setMessage(`Error enviando correo: ${err.message}`),
   });
 
+  const notifyGeneratedMutation = trpc.taxConfigs.notifyManagerialGenerated.useMutation({
+    onSuccess: res => {
+      setMessage(res.message);
+      void utils.systemLogs.notifications.list.invalidate();
+    },
+    onError: err => setMessage(`Error notificando generación: ${err.message}`),
+  });
+
   const exportMutation = trpc.reports.export.useMutation({
+    onSuccess: () => {
+      void handleManagerialReportExportSuccess({
+        setMessage,
+        invalidateNotifications: () => utils.systemLogs.notifications.list.invalidate(),
+      });
+    },
     onError: err => setMessage(`Error exportando reporte: ${err.message}`),
   });
+
+  useEffect(() => {
+    if (report.data && generationNotifiedRef.current !== selectedOrgId) {
+      generationNotifiedRef.current = selectedOrgId;
+      notifyGeneratedMutation.mutate({ organizationId: selectedOrgId });
+    }
+  }, [report.data, selectedOrgId]);
 
   const isCertValid = !certContent || (certContent.includes("-----BEGIN CERTIFICATE-----") && certContent.includes("-----END CERTIFICATE-----"));
   const isKeyValid = !keyContent || (keyContent.includes("-----BEGIN") && keyContent.includes("KEY-----"));
@@ -233,11 +257,11 @@ export default function TaxConfig() {
 
                 {/* Reporte gerencial de ventas e IVA por punto de venta */}
                 <Card className="border-border/70 shadow-sm">
-                  <CardHeader className="flex flex-row items-center justify-between">
-                    <CardTitle className="text-base flex items-center gap-2">
-                      <TrendingUp className="h-5 w-5 text-primary" /> Ventas e IVA Discriminado por Punto de Venta
+                  <CardHeader className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <CardTitle className="min-w-0 text-base flex items-center gap-2">
+                      <TrendingUp className="h-5 w-5 shrink-0 text-primary" /> Ventas e IVA Discriminado por Punto de Venta
                     </CardTitle>
-                    <div className="flex gap-2">
+                    <div className="flex w-full flex-wrap gap-2 sm:w-auto">
                       <Button
                         variant="outline"
                         size="sm"

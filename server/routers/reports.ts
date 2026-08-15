@@ -1,6 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { tasks } from "../../drizzle/schema";
+import { tasks, notifications } from "../../drizzle/schema";
 import { getDb } from "../db";
 import { protectedProcedure, router } from "../_core/trpc";
 import { generateExcelReport, generatePdfReport } from "../exportService";
@@ -30,7 +30,7 @@ function parseTaskDescription(raw: string | null) {
 }
 
 export const reportsRouter = router({
-  export: protectedProcedure.input(reportInput).mutation(async ({ input }) => {
+  export: protectedProcedure.input(reportInput).mutation(async ({ input, ctx }) => {
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de datos no disponible." });
 
@@ -58,6 +58,13 @@ export const reportsRouter = router({
       const buffer = input.format === "pdf" ? await generatePdfReport(payload) : await generateExcelReport(payload);
       const extension = input.format === "pdf" ? "pdf" : "xlsx";
       const contentType = input.format === "pdf" ? "application/pdf" : "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+
+      await db.insert(notifications).values({
+        userId: ctx.user.id,
+        type: "system_alert",
+        message: `Reporte gerencial de ventas e IVA generado y exportado en ${extension.toUpperCase()}.`,
+        isRead: 0,
+      });
 
       return {
         fileName: `reporte-gerencial-ventas-iva.${extension}`,
