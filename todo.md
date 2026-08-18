@@ -127,3 +127,10 @@
 - [x] Fase 4: Implementar gráfico interactivo de tendencia histórica de liquidez mensual en el dashboard principal
 - [x] Fase 5: Implementar exportación a PDF del reporte detallado de flujo de caja y proyección de liquidez
 - [x] Fase 6: Escribir pruebas unitarias y de integración y verificar compilación y tests (74 pruebas pasando)
+
+- [x] Fase 1: Auditar VEP, credenciales, correo y gráfico de liquidez; definir dependencias externas
+- [x] Fase 2: Diseñar contrato de pago Interbanking, modelo de escenarios de caja y flujo de envío de correos
+- [x] Fase 3: Implementar pasarela segura de pago de VEP con Interbanking y confirmación humana
+- [x] Fase 4: Implementar simulador interactivo de escenarios de ingresos y gastos en la tendencia de liquidez
+- [x] Fase 5: Implementar envío automático por correo electrónico de comprobantes VEP a los responsables financieros
+- [x] Fase 6: Escribir pruebas unitarias y de integración y verificar compilación y tests (75 pruebas pasando)

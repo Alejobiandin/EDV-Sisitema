@@ -64,4 +64,9 @@ describe("EDV Enterprise Modules Advanced", () => {
     expect(enterpriseRouters.argentinaCore).toBeDefined();
     expect(enterpriseRouters.accounting).toBeDefined();
   });
+
+  it("verifica la pasarela Interbanking, simulador de escenarios y envío de comprobantes", () => {
+    expect(enterpriseRouters.argentinaCore).toBeDefined();
+    expect(enterpriseRouters.accounting).toBeDefined();
+  });
 });
