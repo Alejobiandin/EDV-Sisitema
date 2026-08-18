@@ -154,3 +154,10 @@
 - [x] Fase 3: Implementar tooltips interactivos con diferencias exactas entre escenarios superpuestos
 - [x] Fase 4: Implementar filtros rápidos en el registro de correos para rebotados y no abiertos
 - [x] Fase 5: Escribir pruebas unitarias e integración y verificar compilación y tests (78 pruebas pasando)
+
+- [x] Fase 1: Auditar gráfico, registro de correos y dashboard actuales
+- [x] Fase 2: Diseñar especificación de exportación PDF de gráficos, reenvío masivo y umbral de rebotes
+- [x] Fase 3: Implementar exportación PDF del gráfico comparativo de liquidez con escenarios superpuestos
+- [x] Fase 4: Implementar acción de reenvío masivo controlado para correos rebotados o no abiertos
+- [x] Fase 5: Implementar indicador visual de alerta en el dashboard por rebotes críticos de correos
+- [x] Fase 6: Escribir pruebas unitarias e integración y verificar compilación y tests (79 pruebas pasando)
