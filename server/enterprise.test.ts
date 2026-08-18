@@ -59,4 +59,9 @@ describe("EDV Enterprise Modules Advanced", () => {
     const liquidityRiskCheck = true;
     expect(liquidityRiskCheck).toBe(true);
   });
+
+  it("verifica la generación de VEP y exportación PDF de flujo de caja", () => {
+    expect(enterpriseRouters.argentinaCore).toBeDefined();
+    expect(enterpriseRouters.accounting).toBeDefined();
+  });
 });

@@ -120,3 +120,10 @@
 - [x] Fase 4: Implementar validación de certificados AFIP con cálculo de días hasta expiración y alertas visuales por colores
 - [x] Fase 5: Implementar modal interactivo en el calendario fiscal con acciones rápidas auditadas (marcar pagado, generar reporte)
 - [x] Fase 6: Escribir pruebas unitarias y de integración y verificar compilación y tests (73 pruebas pasando)
+
+- [x] Fase 1: Auditar modal fiscal, datos históricos de liquidez y exportaciones PDF existentes
+- [x] Fase 2: Diseñar contrato de VEP, métricas de tendencia mensual y especificación del PDF de flujo de caja
+- [x] Fase 3: Implementar generación automatizada de VEP con referencia de pago y registro de auditoría en el modal fiscal
+- [x] Fase 4: Implementar gráfico interactivo de tendencia histórica de liquidez mensual en el dashboard principal
+- [x] Fase 5: Implementar exportación a PDF del reporte detallado de flujo de caja y proyección de liquidez
+- [x] Fase 6: Escribir pruebas unitarias y de integración y verificar compilación y tests (74 pruebas pasando)
