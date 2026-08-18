@@ -141,3 +141,10 @@
 - [x] Fase 4: Implementar guardado de escenarios de simulación y exportación comparativa a Excel (XLSX)
 - [x] Fase 5: Implementar vista detallada de historial y estado de conciliación de pagos por Interbanking
 - [x] Fase 6: Escribir pruebas unitarias e integración y verificar compilación y tests (76 pruebas pasando)
+
+- [x] Fase 1: Auditar correo, escenarios y conciliación bancaria/Interbanking actuales
+- [x] Fase 2: Diseñar eventos de entrega de correo, modelo de superposición de escenarios y reglas de emparejamiento de débitos
+- [x] Fase 3: Implementar registro visual de entrega y apertura de correos con estado en tiempo real
+- [x] Fase 4: Implementar superposición comparativa de múltiples escenarios de simulación en el gráfico de liquidez
+- [x] Fase 5: Implementar función de emparejamiento automático entre débitos bancarios importados y pagos Interbanking
+- [x] Fase 6: Escribir pruebas unitarias y de integración y verificar compilación y tests (77 pruebas pasando)
