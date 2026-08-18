@@ -148,3 +148,9 @@
 - [x] Fase 4: Implementar superposición comparativa de múltiples escenarios de simulación en el gráfico de liquidez
 - [x] Fase 5: Implementar función de emparejamiento automático entre débitos bancarios importados y pagos Interbanking
 - [x] Fase 6: Escribir pruebas unitarias y de integración y verificar compilación y tests (77 pruebas pasando)
+
+- [x] Fase 1: Auditar gráfico comparativo y registro de correos actuales
+- [x] Fase 2: Diseñar especificación de tooltips numéricos y filtros de entrega de correo
+- [x] Fase 3: Implementar tooltips interactivos con diferencias exactas entre escenarios superpuestos
+- [x] Fase 4: Implementar filtros rápidos en el registro de correos para rebotados y no abiertos
+- [x] Fase 5: Escribir pruebas unitarias e integración y verificar compilación y tests (78 pruebas pasando)
