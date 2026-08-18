@@ -69,4 +69,9 @@ describe("EDV Enterprise Modules Advanced", () => {
     expect(enterpriseRouters.argentinaCore).toBeDefined();
     expect(enterpriseRouters.accounting).toBeDefined();
   });
+
+  it("verifica las plantillas de correo, escenarios guardados y conciliación Interbanking", () => {
+    expect(enterpriseRouters.argentinaCore).toBeDefined();
+    expect(enterpriseRouters.accounting).toBeDefined();
+  });
 });

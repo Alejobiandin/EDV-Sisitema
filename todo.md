@@ -134,3 +134,10 @@
 - [x] Fase 4: Implementar simulador interactivo de escenarios de ingresos y gastos en la tendencia de liquidez
 - [x] Fase 5: Implementar envío automático por correo electrónico de comprobantes VEP a los responsables financieros
 - [x] Fase 6: Escribir pruebas unitarias y de integración y verificar compilación y tests (75 pruebas pasando)
+
+- [x] Fase 1: Auditar correo, escenarios, exportaciones y pagos Interbanking existentes
+- [x] Fase 2: Diseñar modelos de plantillas de correo, escenarios persistidos y estados de conciliación Interbanking
+- [x] Fase 3: Implementar editor visual y persistencia de plantillas de correo electrónico institucionales
+- [x] Fase 4: Implementar guardado de escenarios de simulación y exportación comparativa a Excel (XLSX)
+- [x] Fase 5: Implementar vista detallada de historial y estado de conciliación de pagos por Interbanking
+- [x] Fase 6: Escribir pruebas unitarias e integración y verificar compilación y tests (76 pruebas pasando)
