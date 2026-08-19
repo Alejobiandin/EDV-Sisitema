@@ -193,3 +193,11 @@
 - [x] Fase 4: Implementar progreso visual de generación y descarga ZIP
 - [x] Fase 5: Implementar exportación PDF detallada de errores de validación
 - [x] Fase 6: Escribir pruebas unitarias e integración y verificar compilación y tests (82 pruebas pasando)
+
+- [x] Fase 1: Auditar ZIP, editor TXT, notificaciones y escenarios existentes
+- [x] Fase 2: Diseñar filtros multiempresa, versionado, evento de validación y modelo Excel
+- [x] Fase 3: Implementar filtro por empresa y cartera en la descarga ZIP laboral
+- [x] Fase 4: Implementar historial de versiones y comparación del editor TXT
+- [x] Fase 5: Implementar aviso interno de lote validado sin errores
+- [x] Fase 6: Implementar exportación Excel comparativa de escenarios de liquidez
+- [x] Fase 7: Validar aislamiento multiempresa, auditoría, pruebas, compilación y checkpoint (83 pruebas pasando)
