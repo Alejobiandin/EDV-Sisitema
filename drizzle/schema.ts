@@ -389,3 +389,43 @@ export const argentinaTaxDeadlines = mysqlTable("argentina_tax_deadlines", {
   status: mysqlEnum("status", ["pending", "completed", "overdue"]).default("pending").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
+
+export const afipPadronSyncLog = mysqlTable("afip_padron_sync_log", {
+  id: int("id").autoincrement().primaryKey(),
+  cuit: varchar("cuit", { length: 20 }).notNull(),
+  taxpayerName: varchar("taxpayer_name", { length: 255 }).notNull(),
+  status: varchar("status", { length: 50 }).notNull(), // active, inactive, updated
+  taxCategory: varchar("tax_category", { length: 100 }),
+  syncDetails: text("sync_details"),
+  syncedAt: timestamp("synced_at").defaultNow().notNull(),
+});
+
+export const liquidityProjections = mysqlTable("liquidity_projections", {
+  id: int("id").autoincrement().primaryKey(),
+  organizationId: int("organization_id").notNull(),
+  projectionDate: timestamp("projection_date").notNull(),
+  projectedInflow: decimal("projected_inflow", { precision: 15, scale: 2 }).notNull(),
+  projectedOutflow: decimal("projected_outflow", { precision: 15, scale: 2 }).notNull(),
+  imminentTaxLiabilities: decimal("imminent_tax_liabilities", { precision: 15, scale: 2 }).notNull(),
+  netBalance: decimal("net_balance", { precision: 15, scale: 2 }).notNull(),
+  riskDetected: int("risk_detected").default(0).notNull(), // 0 or 1
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const interbankingReconciliations = mysqlTable("interbanking_reconciliations", {
+  id: int("id").autoincrement().primaryKey(),
+  bankStatementId: int("bank_statement_id").notNull(),
+  vepReference: varchar("vep_reference", { length: 100 }).notNull(),
+  amount: decimal("amount", { precision: 15, scale: 2 }).notNull(),
+  matchedStatus: varchar("matched_status", { length: 50 }).notNull(), // auto_matched, manual_approved, pending
+  reconciledAt: timestamp("reconciled_at").defaultNow().notNull(),
+});
+
+export const cctConceptTemplates = mysqlTable("cct_concept_templates", {
+  id: int("id").autoincrement().primaryKey(),
+  cctCode: varchar("cct_code", { length: 50 }).notNull(),
+  conceptName: varchar("concept_name", { length: 255 }).notNull(),
+  calculationFormula: text("calculation_formula").notNull(),
+  remunerative: int("remunerative").default(1).notNull(), // 1 or 0
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
