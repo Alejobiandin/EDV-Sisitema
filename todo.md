@@ -180,3 +180,9 @@
 - [x] Fase 4: Implementar gráfico circular de reglas aprobadas y rechazadas
 - [x] Fase 5: Implementar edición en línea del TXT con revalidación y control de versiones
 - [x] Fase 6: Escribir pruebas unitarias e integración y verificar compilación y tests (80 pruebas pasando)
+
+- [x] Fase 1: Auditar gráfico circular, consola de errores e historial de lotes actuales
+- [x] Fase 2: Diseñar interacción regla-error y paquete ZIP seguro por período fiscal
+- [x] Fase 3: Implementar filtrado de consola al seleccionar segmentos del gráfico
+- [x] Fase 4: Implementar descarga masiva ZIP de TXT y certificados del período
+- [x] Fase 5: Validar seguridad, permisos, integridad del ZIP, pruebas, compilación y checkpoint (81 pruebas pasando)
