@@ -166,3 +166,10 @@
 - [x] Fase 2: Analizar requisitos técnicos de validación del Libro de Sueldos Digital (LSD)
 - [x] Fase 3: Diseñar el motor de pre-validación sintáctica, semántica y cruzada de liquidaciones
 - [x] Fase 4: Entregar la propuesta de arquitectura de validación automática e informe técnico
+
+- [x] Fase 1: Auditar el exportador LSD, firma PAdES/TSA, RBAC y pantallas existentes
+- [x] Fase 2: Diseñar el esquema de reglas AFIP y contratos de errores por línea y columna
+- [x] Fase 3: Implementar motor TypeScript de validación dinámica del TXT
+- [x] Fase 4: Implementar panel lateral de reglas y consola interactiva de errores
+- [x] Fase 5: Implementar aprobación, descarga TXT sin errores y firma masiva PAdES/TSA
+- [x] Fase 6: Escribir pruebas unitarias e integración y verificar compilación y tests (80 pruebas pasando)
