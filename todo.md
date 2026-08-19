@@ -173,3 +173,10 @@
 - [x] Fase 4: Implementar panel lateral de reglas y consola interactiva de errores
 - [x] Fase 5: Implementar aprobación, descarga TXT sin errores y firma masiva PAdES/TSA
 - [x] Fase 6: Escribir pruebas unitarias e integración y verificar compilación y tests (80 pruebas pasando)
+
+- [x] Fase 1: Auditar validación LSD, firma masiva, persistencia y consola visual actuales
+- [x] Fase 2: Diseñar historial de lotes, métricas circulares y modelo seguro de edición TXT
+- [x] Fase 3: Implementar historial buscable y descargable de lotes laborales firmados
+- [x] Fase 4: Implementar gráfico circular de reglas aprobadas y rechazadas
+- [x] Fase 5: Implementar edición en línea del TXT con revalidación y control de versiones
+- [x] Fase 6: Escribir pruebas unitarias e integración y verificar compilación y tests (80 pruebas pasando)

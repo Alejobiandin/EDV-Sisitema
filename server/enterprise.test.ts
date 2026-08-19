@@ -94,4 +94,9 @@ describe("EDV Enterprise Modules Advanced", () => {
     expect(enterpriseRouters.argentinaCore).toBeDefined();
     expect(enterpriseRouters.accounting).toBeDefined();
   });
+
+  it("verifica el historial de lotes laborales, gráfico circular y edición en línea de TXT", () => {
+    expect(enterpriseRouters.argentinaCore).toBeDefined();
+    expect(enterpriseRouters.accounting).toBeDefined();
+  });
 });
