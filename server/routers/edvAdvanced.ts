@@ -5,34 +5,34 @@ import { tasks, notifications, organizationalDnaRules, organizationalDnaPolicies
 import { eq, desc } from "drizzle-orm";
 import { notifyOwner } from "../_core/notification";
 import { invokeLLM } from "../_core/llm";
+import { assertOrganizationAccess } from "../organizationAccess";
 
 export const edvAdvancedRouter = router({
   triggerHitlAlert: protectedProcedure
     .input(z.object({ taskId: z.number() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       const db = await getDb();
       if (!db) throw new Error("Base de datos no disponible");
 
       const taskRows = await db.select().from(tasks).where(eq(tasks.id, input.taskId)).limit(1);
       const task = taskRows[0];
       if (!task) throw new Error("Tarea no encontrada");
+      await assertOrganizationAccess(ctx, task.organizationId, "read");
 
-      // Disparar notificación push/propietario
+      // Disparar notificación al propietario y dejar el registro interno
       await notifyOwner({
         title: `⚠️ Alerta URGENTE EDV: Aprobación Humana Requerida`,
         content: `La tarea "${task.name}" (ID: ${task.id}) se encuentra bloqueada en estado de alto riesgo y requiere revisión inmediata en el centro de mando.`,
       });
 
-      // Buscar un usuario válido para la notificación
-      const userRows = await db.select().from(edvClients).limit(1); // o similar, o insertar userId por defecto 1
       await db.insert(notifications).values({
-        userId: 1,
+        userId: ctx.user.id,
         type: "human_approval",
-        message: `Aviso urgente enviado por correo, Telegram y canal push para tarea #${task.id}: ${task.name}`,
+        message: `Aviso interno preparado para aprobación humana de la tarea #${task.id}: ${task.name}. La entrega por correo, Telegram o push externo requiere un proveedor configurado.`,
         isRead: 0,
       });
 
-      return { success: true, message: "Alertas push, correo y Telegram enviadas exitosamente" };
+      return { success: true, mode: "prepared", delivery: ["owner_notification", "internal_center"], message: "Aviso interno registrado; los canales externos quedan pendientes de credenciales y proveedor." };
     }),
 
   askDnaAssistant: protectedProcedure

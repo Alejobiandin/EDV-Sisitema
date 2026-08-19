@@ -1,6 +1,7 @@
 import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
 import { createAgent, getAgent, updateAgent, deleteAgent, listAgents, listAgentMetrics } from "../db";
 import { z } from "zod";
+import { assertOrganizationAccess } from "../organizationAccess";
 
 export const agentsRouter = router({
   create: protectedProcedure
@@ -56,6 +57,7 @@ export const agentsRouter = router({
 
   executeTask: protectedProcedure
     .input(z.object({
+      organizationId: z.number().int().positive().default(1),
       agentId: z.number(),
       taskType: z.enum(["tax_computation", "payroll_liquidation", "social_charges", "accounting_review"]),
       payload: z.object({
@@ -69,8 +71,10 @@ export const agentsRouter = router({
       }).passthrough(),
     }))
     .mutation(async ({ ctx, input }) => {
+      await assertOrganizationAccess(ctx, input.organizationId, "write");
       const { executeCognitiveAgentTask } = await import("../agentEngine");
       return executeCognitiveAgentTask({
+        organizationId: input.organizationId,
         agentId: input.agentId,
         taskType: input.taskType,
         payload: input.payload,

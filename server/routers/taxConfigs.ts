@@ -4,11 +4,13 @@ import { getDb } from "../db";
 import { taxConfigurations, taxSyncLogs, notifications, edvInvoices, edvClients } from "../../drizzle/schema";
 import { eq, desc } from "drizzle-orm";
 import { storagePut } from "../storage";
+import { assertOrganizationAccess } from "../organizationAccess";
 
 export const taxConfigsRouter = router({
   get: partnerProcedure
     .input(z.object({ organizationId: z.number() }))
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
+      await assertOrganizationAccess(ctx, input.organizationId, "read");
       const db = await getDb();
       if (!db) return null;
       const rows = await db.select().from(taxConfigurations).where(eq(taxConfigurations.organizationId, input.organizationId)).limit(1);
@@ -27,7 +29,8 @@ export const taxConfigsRouter = router({
         keyContent: z.string().optional(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      await assertOrganizationAccess(ctx, input.organizationId, "write");
       const db = await getDb();
       if (!db) throw new Error("Base de datos no disponible");
 
@@ -77,7 +80,8 @@ export const taxConfigsRouter = router({
 
   syncPointsOfSale: partnerProcedure
     .input(z.object({ organizationId: z.number() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      await assertOrganizationAccess(ctx, input.organizationId, "write");
       const db = await getDb();
       if (!db) throw new Error("Base de datos no disponible");
 
@@ -113,12 +117,13 @@ export const taxConfigsRouter = router({
         details: `Sincronizados ${officialPoints.length} puntos de venta desde WSFEv1`,
       });
 
-      return { success: true, points: officialPoints, message: "Puntos de venta sincronizados correctamente desde WSFEv1" };
+      return { success: true, mode: "homologation_simulation" as const, points: officialPoints, message: "Puntos de venta de homologación preparados; la consulta real WSFEv1 requiere certificado y autorización ARCA." };
     }),
 
   getSyncLogs: partnerProcedure
     .input(z.object({ organizationId: z.number() }))
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
+      await assertOrganizationAccess(ctx, input.organizationId, "read");
       const db = await getDb();
       if (!db) return [];
       return db
@@ -130,11 +135,13 @@ export const taxConfigsRouter = router({
 
   getManagerialReport: partnerProcedure
     .input(z.object({ organizationId: z.number() }))
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
+      await assertOrganizationAccess(ctx, input.organizationId, "read");
       const db = await getDb();
       if (!db) return { byPos: [], totalNet: 0, totalVat: 0, totalGross: 0 };
 
-      const invoices = await db.select().from(edvInvoices);
+      const allInvoices = await db.select().from(edvInvoices);
+      const invoices = allInvoices.filter(invoice => invoice.organizationId === input.organizationId || invoice.organizationId == null);
       const posMap: Record<number, { net: number; vat: number; gross: number; count: number }> = {
         1: { net: 120000, vat: 25200, gross: 145200, count: 4 },
         2: { net: 85000, vat: 17850, gross: 102850, count: 2 },
@@ -167,6 +174,7 @@ export const taxConfigsRouter = router({
   notifyManagerialGenerated: partnerProcedure
     .input(z.object({ organizationId: z.number() }))
     .mutation(async ({ input, ctx }) => {
+      await assertOrganizationAccess(ctx, input.organizationId, "write");
       const db = await getDb();
       if (!db) throw new Error("Base de datos no disponible");
       await db.insert(notifications).values({
@@ -179,18 +187,22 @@ export const taxConfigsRouter = router({
     }),
 
   sendInvoiceEmail: partnerProcedure
-    .input(z.object({ invoiceId: z.number(), clientEmail: z.string().email() }))
-    .mutation(async ({ input }) => {
+    .input(z.object({ invoiceId: z.number(), organizationId: z.number().int().positive().default(1), clientEmail: z.string().email() }))
+    .mutation(async ({ input, ctx }) => {
+      await assertOrganizationAccess(ctx, input.organizationId, "write");
       const db = await getDb();
       if (!db) throw new Error("Base de datos no disponible");
+      const invoice = await db.select().from(edvInvoices).where(eq(edvInvoices.id, input.invoiceId)).limit(1);
+      if (!invoice[0] || invoice[0].organizationId !== input.organizationId) throw new Error("Factura fuera de la organización seleccionada");
 
-      // Simulación de envío de correo SMTP con CAE adjunto
-      return { success: true, message: `Factura con CAE enviada exitosamente a ${input.clientEmail}` };
+      // Proveedor SMTP real queda pendiente de credenciales externas; este flujo no afirma un envío real.
+      return { success: true, mode: "prepared", message: `Factura con CAE preparada para envío a ${input.clientEmail}` };
     }),
 
   verifyConnection: partnerProcedure
     .input(z.object({ organizationId: z.number() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      await assertOrganizationAccess(ctx, input.organizationId, "write");
       const db = await getDb();
       if (!db) throw new Error("Base de datos no disponible");
 

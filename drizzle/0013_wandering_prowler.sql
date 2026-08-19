@@ -1,0 +1,1 @@
+ALTER TABLE `tasks` ADD `organization_id` int DEFAULT 1 NOT NULL;

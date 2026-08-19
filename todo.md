@@ -214,3 +214,28 @@
 - [x] Fase 1: Desarrollar una Guía Interactiva Externa de Homologación a Producción dentro del panel de configuración para asistir al usuario en la obtención de certificados reales de AFIP, Interbanking y TSAs.
 - [x] Fase 2: Implementar un Monitor de Salud de Conexiones Externas en tiempo real para verificar el estado de los WebServices oficiales, agregadores bancarios y pasarelas con reintentos automáticos.
 - [x] Fase 3: Crear un Asistente Automático de Diagnóstico de CUITs y Padrón que valide inconsistencias fiscales de la cartera antes de generar declaraciones juradas.
+
+## Etapa de consolidación interna EDV v7.x
+
+- [x] Conectar visualmente los validadores preflight de CUIT, PEM, CSV y balance contable a la consola de preparación productiva.
+- [x] Propagar organizationId en dashboard, clientes, empleados, reportes, tareas, banca, firma y flujos fiscales sensibles.
+- [x] Agregar columnas organizacionales a tablas de banca, vencimientos, certificados, padrón, backups, Interbanking y plantillas CCT, con migraciones no destructivas aplicadas.
+- [x] Reforzar guards de organización y RBAC para lecturas y mutaciones sensibles, preservando el acceso global controlado de admin/partner.
+- [x] Implementar manifiestos de backup con checksum, simulacro de recuperación y señalización explícita de la dependencia del backup físico del hosting.
+- [x] Completar la máquina de estados externa con clasificación de bloqueos, fallas transitorias, fallas definitivas y backoff determinístico.
+- [x] Ampliar la coordinación multiagente con etapas, riesgo mínimo, autonomía acotada, escalamiento y HITL obligatorio para acciones externas.
+- [x] Etiquetar las respuestas preparadas, simuladas e internas para no presentarlas como conexiones, firmas, pagos, envíos o presentaciones reales.
+- [x] Ampliar pruebas de coordinación, preflight, recuperación, health checks, RBAC y regresión de integraciones.
+- [x] Documentar flujos operativos, criterios de aceptación, respuesta ante fallas y acciones externas en docs/EDV_OPERACION_PRODUCCION.md.
+- [x] Verificar visualmente producción, dashboard, maestros y adaptación móvil.
+- [x] Ejecutar TypeScript y suite completa: 32 archivos de prueba y 109 pruebas pasando.
+
+## Acciones externas restantes — requieren intervención del usuario
+
+- [ ] Cargar certificados X.509, claves y relaciones WSAA/WSFEv1 reales de ARCA/AFIP.
+- [ ] Seleccionar y autorizar proveedor Open Banking/Interbanking y cuentas bancarias.
+- [ ] Contratar/configurar proveedor legal de firma digital y TSA.
+- [ ] Configurar proveedor SMTP/API de correo, dominio, rebotes y credenciales.
+- [ ] Confirmar proveedores de pago, webhooks reales y autorización de operaciones.
+- [ ] Cargar datos reales, reglas institucionales, convenios, responsables y aprobar resultados profesionales.
+- [ ] Ejecutar aceptación final y publicar EDV desde la interfaz de gestión.

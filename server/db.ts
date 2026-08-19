@@ -470,12 +470,13 @@ export async function rejectTask(taskId: number, userId: number, comment: string
   return getTask(taskId);
 }
 
-export async function listTasks(status?: string, assignedAgentId?: number): Promise<Task[]> {
+export async function listTasks(status?: string, assignedAgentId?: number, organizationId?: number): Promise<Task[]> {
   const db = await getDb();
   if (!db) return [];
   let query: any = db.select().from(tasks);
   if (status) query = query.where(eq(tasks.status as any, status));
   if (assignedAgentId) query = query.where(eq(tasks.assignedAgentId, assignedAgentId));
+  if (organizationId) query = query.where(eq(tasks.organizationId, organizationId));
   return await query;
 }
 

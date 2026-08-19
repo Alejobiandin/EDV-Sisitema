@@ -1,4 +1,12 @@
-import { decimal, int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import {
+  decimal,
+  int,
+  mysqlEnum,
+  mysqlTable,
+  text,
+  timestamp,
+  varchar,
+} from "drizzle-orm/mysql-core";
 
 export const users = mysqlTable("users", {
   id: int("id").autoincrement().primaryKey(),
@@ -6,7 +14,17 @@ export const users = mysqlTable("users", {
   name: text("name"),
   email: varchar("email", { length: 320 }),
   loginMethod: varchar("loginMethod", { length: 64 }),
-  role: mysqlEnum("role", ["user", "admin", "partner", "client", "auditor", "tax_specialist", "payroll_specialist"]).default("user").notNull(),
+  role: mysqlEnum("role", [
+    "user",
+    "admin",
+    "partner",
+    "client",
+    "auditor",
+    "tax_specialist",
+    "payroll_specialist",
+  ])
+    .default("user")
+    .notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
@@ -14,7 +32,12 @@ export const users = mysqlTable("users", {
 
 export const organizationalDnaRules = mysqlTable("organizational_dna_rules", {
   id: int("id").autoincrement().primaryKey(),
-  type: mysqlEnum("type", ["fiscal", "contable", "laboral", "general"]).notNull(),
+  type: mysqlEnum("type", [
+    "fiscal",
+    "contable",
+    "laboral",
+    "general",
+  ]).notNull(),
   name: varchar("name", { length: 255 }).notNull(),
   jurisdiction: varchar("jurisdiction", { length: 100 }),
   collectiveAgreement: varchar("collectiveAgreement", { length: 150 }),
@@ -28,31 +51,39 @@ export const organizationalDnaRules = mysqlTable("organizational_dna_rules", {
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 
-export const organizationalDnaPolicies = mysqlTable("organizational_dna_policies", {
-  id: int("id").autoincrement().primaryKey(),
-  name: varchar("name", { length: 255 }).notNull(),
-  description: text("description"),
-  content: text("content").notNull(),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+export const organizationalDnaPolicies = mysqlTable(
+  "organizational_dna_policies",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    name: varchar("name", { length: 255 }).notNull(),
+    description: text("description"),
+    content: text("content").notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  }
+);
 
-export const organizationalDnaWorkflows = mysqlTable("organizational_dna_workflows", {
-  id: int("id").autoincrement().primaryKey(),
-  name: varchar("name", { length: 255 }).notNull(),
-  description: text("description"),
-  bpmnDefinition: text("bpmnDefinition").notNull(),
-  version: varchar("version", { length: 50 }).notNull(),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+export const organizationalDnaWorkflows = mysqlTable(
+  "organizational_dna_workflows",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    name: varchar("name", { length: 255 }).notNull(),
+    description: text("description"),
+    bpmnDefinition: text("bpmnDefinition").notNull(),
+    version: varchar("version", { length: 50 }).notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  }
+);
 
 export const agents = mysqlTable("agents", {
   id: int("id").autoincrement().primaryKey(),
   name: varchar("name", { length: 255 }).notNull(),
   role: varchar("role", { length: 255 }).notNull(),
   code: varchar("code", { length: 100 }),
-  status: mysqlEnum("status", ["active", "inactive", "in_task"]).default("inactive").notNull(),
+  status: mysqlEnum("status", ["active", "inactive", "in_task"])
+    .default("inactive")
+    .notNull(),
   organ: varchar("organ", { length: 255 }),
   autonomyLevel: int("autonomyLevel").default(1).notNull(),
   capabilitiesJson: text("capabilitiesJson"),
@@ -64,7 +95,9 @@ export const agents = mysqlTable("agents", {
 
 export const agentMetrics = mysqlTable("agent_metrics", {
   id: int("id").autoincrement().primaryKey(),
-  agentId: int("agentId").notNull().references(() => agents.id),
+  agentId: int("agentId")
+    .notNull()
+    .references(() => agents.id),
   metricName: varchar("metricName", { length: 255 }).notNull(),
   metricValue: varchar("metricValue", { length: 255 }).notNull(),
   timestamp: timestamp("timestamp").defaultNow().notNull(),
@@ -72,10 +105,28 @@ export const agentMetrics = mysqlTable("agent_metrics", {
 
 export const tasks = mysqlTable("tasks", {
   id: int("id").autoincrement().primaryKey(),
+  organizationId: int("organization_id").default(1).notNull(),
   name: varchar("name", { length: 255 }).notNull(),
   description: text("description"),
-  status: mysqlEnum("status", ["pending", "in_progress", "pending_approval", "completed", "rejected", "failed", "cancelled"]).default("pending").notNull(),
-  approvalStatus: mysqlEnum("approvalStatus", ["not_required", "pending", "approved", "rejected"]).default("not_required").notNull(),
+  status: mysqlEnum("status", [
+    "pending",
+    "in_progress",
+    "pending_approval",
+    "completed",
+    "rejected",
+    "failed",
+    "cancelled",
+  ])
+    .default("pending")
+    .notNull(),
+  approvalStatus: mysqlEnum("approvalStatus", [
+    "not_required",
+    "pending",
+    "approved",
+    "rejected",
+  ])
+    .default("not_required")
+    .notNull(),
   approvalRequestedAt: timestamp("approvalRequestedAt"),
   approvedAt: timestamp("approvedAt"),
   approvedBy: int("approvedBy").references(() => users.id),
@@ -88,10 +139,19 @@ export const tasks = mysqlTable("tasks", {
 
 export const taskExecutions = mysqlTable("task_executions", {
   id: int("id").autoincrement().primaryKey(),
-  taskId: int("taskId").notNull().references(() => tasks.id),
-  agentId: int("agentId").notNull().references(() => agents.id),
+  taskId: int("taskId")
+    .notNull()
+    .references(() => tasks.id),
+  agentId: int("agentId")
+    .notNull()
+    .references(() => agents.id),
   step: varchar("step", { length: 255 }).notNull(),
-  status: mysqlEnum("status", ["pending", "in_progress", "completed", "failed"]).notNull(),
+  status: mysqlEnum("status", [
+    "pending",
+    "in_progress",
+    "completed",
+    "failed",
+  ]).notNull(),
   log: text("log"),
   startTime: timestamp("startTime").defaultNow().notNull(),
   endTime: timestamp("endTime"),
@@ -122,9 +182,17 @@ export const auditLog = mysqlTable("audit_log", {
 
 export const notifications = mysqlTable("notifications", {
   id: int("id").autoincrement().primaryKey(),
-  userId: int("userId").notNull().references(() => users.id),
+  userId: int("userId")
+    .notNull()
+    .references(() => users.id),
   agentId: int("agentId").references(() => agents.id),
-  type: mysqlEnum("type", ["task_completed", "agent_error", "human_approval", "system_alert", "pattern_detected"]).notNull(),
+  type: mysqlEnum("type", [
+    "task_completed",
+    "agent_error",
+    "human_approval",
+    "system_alert",
+    "pattern_detected",
+  ]).notNull(),
   message: text("message").notNull(),
   isRead: int("isRead").default(0).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
@@ -132,10 +200,15 @@ export const notifications = mysqlTable("notifications", {
 
 export const userPreferences = mysqlTable("user_preferences", {
   id: int("id").autoincrement().primaryKey(),
-  userId: int("userId").notNull().references(() => users.id).unique(),
+  userId: int("userId")
+    .notNull()
+    .references(() => users.id)
+    .unique(),
   theme: varchar("theme", { length: 50 }).default("light").notNull(),
   dashboardLayout: text("dashboardLayout"),
-  density: mysqlEnum("density", ["compact", "comfortable"]).default("comfortable").notNull(),
+  density: mysqlEnum("density", ["compact", "comfortable"])
+    .default("comfortable")
+    .notNull(),
   notificationSettings: text("notificationSettings"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -143,7 +216,9 @@ export const userPreferences = mysqlTable("user_preferences", {
 
 export const userPatterns = mysqlTable("user_patterns", {
   id: int("id").autoincrement().primaryKey(),
-  userId: int("userId").notNull().references(() => users.id),
+  userId: int("userId")
+    .notNull()
+    .references(() => users.id),
   patternType: varchar("patternType", { length: 255 }).notNull(),
   patternValue: text("patternValue").notNull(),
   lastDetected: timestamp("lastDetected").defaultNow().notNull(),
@@ -155,16 +230,27 @@ export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 
 export type OrganizationalDnaRule = typeof organizationalDnaRules.$inferSelect;
-export type InsertOrganizationalDnaRule = typeof organizationalDnaRules.$inferInsert;
-export type UpdateOrganizationalDnaRule = Partial<typeof organizationalDnaRules.$inferInsert>;
+export type InsertOrganizationalDnaRule =
+  typeof organizationalDnaRules.$inferInsert;
+export type UpdateOrganizationalDnaRule = Partial<
+  typeof organizationalDnaRules.$inferInsert
+>;
 
-export type OrganizationalDnaPolicy = typeof organizationalDnaPolicies.$inferSelect;
-export type InsertOrganizationalDnaPolicy = typeof organizationalDnaPolicies.$inferInsert;
-export type UpdateOrganizationalDnaPolicy = Partial<typeof organizationalDnaPolicies.$inferInsert>;
+export type OrganizationalDnaPolicy =
+  typeof organizationalDnaPolicies.$inferSelect;
+export type InsertOrganizationalDnaPolicy =
+  typeof organizationalDnaPolicies.$inferInsert;
+export type UpdateOrganizationalDnaPolicy = Partial<
+  typeof organizationalDnaPolicies.$inferInsert
+>;
 
-export type OrganizationalDnaWorkflow = typeof organizationalDnaWorkflows.$inferSelect;
-export type InsertOrganizationalDnaWorkflow = typeof organizationalDnaWorkflows.$inferInsert;
-export type UpdateOrganizationalDnaWorkflow = Partial<typeof organizationalDnaWorkflows.$inferInsert>;
+export type OrganizationalDnaWorkflow =
+  typeof organizationalDnaWorkflows.$inferSelect;
+export type InsertOrganizationalDnaWorkflow =
+  typeof organizationalDnaWorkflows.$inferInsert;
+export type UpdateOrganizationalDnaWorkflow = Partial<
+  typeof organizationalDnaWorkflows.$inferInsert
+>;
 
 export type Agent = typeof agents.$inferSelect;
 export type InsertAgent = typeof agents.$inferInsert;
@@ -204,32 +290,46 @@ export type UpdateUserPattern = Partial<typeof userPatterns.$inferInsert>;
 
 export const edvClients = mysqlTable("edv_clients", {
   id: int("id").autoincrement().primaryKey(),
+  organizationId: int("organization_id").default(1).notNull(),
   name: varchar("name", { length: 255 }).notNull(),
   taxId: varchar("taxId", { length: 50 }).notNull().unique(),
   taxCategory: varchar("taxCategory", { length: 100 }).notNull(), // Responsable Inscripto, Monotributo, etc.
-  operatingCostRate: decimal("operatingCostRate", { precision: 5, scale: 4 }).default("0.3500").notNull(),
+  operatingCostRate: decimal("operatingCostRate", { precision: 5, scale: 4 })
+    .default("0.3500")
+    .notNull(),
   email: varchar("email", { length: 255 }),
   phone: varchar("phone", { length: 50 }),
-  status: mysqlEnum("status", ["active", "suspended", "archived"]).default("active").notNull(),
+  status: mysqlEnum("status", ["active", "suspended", "archived"])
+    .default("active")
+    .notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 
 export const edvEmployees = mysqlTable("edv_employees", {
   id: int("id").autoincrement().primaryKey(),
-  clientId: int("clientId").notNull().references(() => edvClients.id),
+  clientId: int("clientId")
+    .notNull()
+    .references(() => edvClients.id),
   fullName: varchar("fullName", { length: 255 }).notNull(),
   taxIdNumber: varchar("taxIdNumber", { length: 50 }).notNull().unique(), // CUIL / CUIT
   baseSalary: decimal("baseSalary", { precision: 12, scale: 2 }).notNull(),
   cct: varchar("cct", { length: 100 }), // Convenio Colectivo de Trabajo
-  status: mysqlEnum("status", ["active", "leave", "terminated"]).default("active").notNull(),
+  status: mysqlEnum("status", ["active", "leave", "terminated"])
+    .default("active")
+    .notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 
 export const edvVectorMemory = mysqlTable("edv_vector_memory", {
   id: int("id").autoincrement().primaryKey(),
-  sourceType: mysqlEnum("sourceType", ["rule", "policy", "workflow", "document"]).notNull(),
+  sourceType: mysqlEnum("sourceType", [
+    "rule",
+    "policy",
+    "workflow",
+    "document",
+  ]).notNull(),
   sourceId: int("sourceId").notNull(),
   contentChunk: text("contentChunk").notNull(),
   embeddingJson: text("embeddingJson").notNull(), // JSON serializado del vector de embeddings
@@ -238,32 +338,47 @@ export const edvVectorMemory = mysqlTable("edv_vector_memory", {
 
 export const edvCertificates = mysqlTable("edv_certificates", {
   id: int("id").autoincrement().primaryKey(),
-  taskId: int("taskId").notNull().references(() => tasks.id),
+  organizationId: int("organization_id").default(1).notNull(),
+  taskId: int("taskId")
+    .notNull()
+    .references(() => tasks.id),
   recipientEmail: varchar("recipientEmail", { length: 255 }).notNull(),
   signatureHash: varchar("signatureHash", { length: 255 }).notNull(),
-  status: mysqlEnum("status", ["signed", "sent", "verified", "failed"]).default("signed").notNull(),
+  status: mysqlEnum("status", ["signed", "sent", "verified", "failed"])
+    .default("signed")
+    .notNull(),
   sentAt: timestamp("sentAt").defaultNow().notNull(),
 });
 
 export const edvInvoices = mysqlTable("edv_invoices", {
   id: int("id").autoincrement().primaryKey(),
+  organizationId: int("organization_id").default(1).notNull(),
   taskId: int("taskId").references(() => tasks.id),
-  clientId: int("clientId").notNull().references(() => edvClients.id),
+  clientId: int("clientId")
+    .notNull()
+    .references(() => edvClients.id),
   amount: decimal("amount", { precision: 12, scale: 2 }).notNull(),
-  status: mysqlEnum("status", ["pending", "paid", "cancelled"]).default("pending").notNull(),
-  externalPaymentReference: varchar("externalPaymentReference", { length: 255 }),
+  status: mysqlEnum("status", ["pending", "paid", "cancelled"])
+    .default("pending")
+    .notNull(),
+  externalPaymentReference: varchar("externalPaymentReference", {
+    length: 255,
+  }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 
 export const bankConnections = mysqlTable("bank_connections", {
   id: int("id").autoincrement().primaryKey(),
+  organizationId: int("organization_id").default(1).notNull(),
   name: varchar("name", { length: 255 }).notNull(),
   institution: varchar("institution", { length: 255 }).notNull(),
   provider: varchar("provider", { length: 100 }).notNull(),
   accountMasked: varchar("accountMasked", { length: 100 }),
   secretRef: varchar("secretRef", { length: 255 }).notNull(),
-  status: mysqlEnum("status", ["pending", "active", "error", "disabled"]).default("pending").notNull(),
+  status: mysqlEnum("status", ["pending", "active", "error", "disabled"])
+    .default("pending")
+    .notNull(),
   lastSyncedAt: timestamp("lastSyncedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -271,13 +386,18 @@ export const bankConnections = mysqlTable("bank_connections", {
 
 export const bankTransactions = mysqlTable("bank_transactions", {
   id: int("id").autoincrement().primaryKey(),
-  bankConnectionId: int("bankConnectionId").notNull().references(() => bankConnections.id),
+  organizationId: int("organization_id").default(1).notNull(),
+  bankConnectionId: int("bankConnectionId")
+    .notNull()
+    .references(() => bankConnections.id),
   externalId: varchar("externalId", { length: 255 }).notNull().unique(),
   bookedAt: timestamp("bookedAt").notNull(),
   description: text("description"),
   amount: decimal("amount", { precision: 18, scale: 2 }).notNull(),
   direction: mysqlEnum("direction", ["credit", "debit"]).notNull(),
-  status: mysqlEnum("status", ["unmatched", "matched", "ignored", "review"]).default("unmatched").notNull(),
+  status: mysqlEnum("status", ["unmatched", "matched", "ignored", "review"])
+    .default("unmatched")
+    .notNull(),
   matchedInvoiceId: int("matchedInvoiceId").references(() => edvInvoices.id),
   rawPayload: text("rawPayload"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
@@ -304,14 +424,18 @@ export const organizationMembers = mysqlTable("organization_members", {
 export const taxConfigurations = mysqlTable("tax_configurations", {
   id: int("id").autoincrement().primaryKey(),
   organizationId: int("organization_id").notNull(),
-  environment: varchar("environment", { length: 32 }).default("homologation").notNull(), // homologation, production
+  environment: varchar("environment", { length: 32 })
+    .default("homologation")
+    .notNull(), // homologation, production
   cuit: varchar("cuit", { length: 50 }).notNull(),
   pointOfSale: int("point_of_sale").default(1).notNull(),
   autoEmitOnApproval: int("auto_emit_on_approval").default(0).notNull(), // 0 = false, 1 = true
   syncedPointsOfSale: text("synced_points_of_sale"), // JSON string with synced POS list
   certStorageKey: varchar("cert_storage_key", { length: 512 }),
   keyStorageKey: varchar("key_storage_key", { length: 512 }),
-  status: varchar("status", { length: 32 }).default("pending_verification").notNull(),
+  status: varchar("status", { length: 32 })
+    .default("pending_verification")
+    .notNull(),
   lastVerifiedAt: timestamp("last_verified_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -332,33 +456,53 @@ export const accountingAccounts = mysqlTable("accounting_accounts", {
   organizationId: int("organization_id").notNull(),
   code: varchar("code", { length: 50 }).notNull(), // Ej: 1.1.1.01 Caja
   name: varchar("name", { length: 255 }).notNull(),
-  type: mysqlEnum("type", ["asset", "liability", "equity", "revenue", "expense"]).notNull(),
+  type: mysqlEnum("type", [
+    "asset",
+    "liability",
+    "equity",
+    "revenue",
+    "expense",
+  ]).notNull(),
   isActive: int("is_active").default(1).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-export const accountingJournalEntries = mysqlTable("accounting_journal_entries", {
-  id: int("id").autoincrement().primaryKey(),
-  organizationId: int("organization_id").notNull(),
-  entryNumber: int("entry_number").notNull(),
-  date: timestamp("date").notNull(),
-  description: text("description").notNull(),
-  status: mysqlEnum("status", ["draft", "posted", "closed"]).default("posted").notNull(),
-  createdBy: int("created_by").references(() => users.id),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+export const accountingJournalEntries = mysqlTable(
+  "accounting_journal_entries",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    organizationId: int("organization_id").notNull(),
+    entryNumber: int("entry_number").notNull(),
+    date: timestamp("date").notNull(),
+    description: text("description").notNull(),
+    status: mysqlEnum("status", ["draft", "posted", "closed"])
+      .default("posted")
+      .notNull(),
+    createdBy: int("created_by").references(() => users.id),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  }
+);
 
 export const accountingJournalLines = mysqlTable("accounting_journal_lines", {
   id: int("id").autoincrement().primaryKey(),
-  entryId: int("entry_id").notNull().references(() => accountingJournalEntries.id),
-  accountId: int("account_id").notNull().references(() => accountingAccounts.id),
-  debit: decimal("debit", { precision: 15, scale: 2 }).default("0.00").notNull(),
-  credit: decimal("credit", { precision: 15, scale: 2 }).default("0.00").notNull(),
+  entryId: int("entry_id")
+    .notNull()
+    .references(() => accountingJournalEntries.id),
+  accountId: int("account_id")
+    .notNull()
+    .references(() => accountingAccounts.id),
+  debit: decimal("debit", { precision: 15, scale: 2 })
+    .default("0.00")
+    .notNull(),
+  credit: decimal("credit", { precision: 15, scale: 2 })
+    .default("0.00")
+    .notNull(),
   concept: text("concept"),
 });
 
 export const backupAuditLogs = mysqlTable("backup_audit_logs", {
   id: int("id").autoincrement().primaryKey(),
+  organizationId: int("organization_id").default(1).notNull(),
   backupType: varchar("backup_type", { length: 50 }).notNull(), // snapshot, database_dump, config_archive
   status: varchar("status", { length: 32 }).notNull(), // success, failed
   s3Url: varchar("s3_url", { length: 512 }),
@@ -367,31 +511,49 @@ export const backupAuditLogs = mysqlTable("backup_audit_logs", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-export const argentinaPayrollDeclarations = mysqlTable("argentina_payroll_declarations", {
-  id: int("id").autoincrement().primaryKey(),
-  organizationId: int("organization_id").notNull(),
-  period: varchar("period", { length: 20 }).notNull(), // Ej: 2026-07
-  totalEmployees: int("total_employees").notNull(),
-  grossPayroll: decimal("grossPayroll", { precision: 15, scale: 2 }).notNull(),
-  employerContributions: decimal("employer_contributions", { precision: 15, scale: 2 }).notNull(),
-  employeeContributions: decimal("employee_contributions", { precision: 15, scale: 2 }).notNull(),
-  totalF931: decimal("total_f931", { precision: 15, scale: 2 }).notNull(),
-  status: mysqlEnum("status", ["draft", "submitted", "paid"]).default("draft").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+export const argentinaPayrollDeclarations = mysqlTable(
+  "argentina_payroll_declarations",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    organizationId: int("organization_id").notNull(),
+    period: varchar("period", { length: 20 }).notNull(), // Ej: 2026-07
+    totalEmployees: int("total_employees").notNull(),
+    grossPayroll: decimal("grossPayroll", {
+      precision: 15,
+      scale: 2,
+    }).notNull(),
+    employerContributions: decimal("employer_contributions", {
+      precision: 15,
+      scale: 2,
+    }).notNull(),
+    employeeContributions: decimal("employee_contributions", {
+      precision: 15,
+      scale: 2,
+    }).notNull(),
+    totalF931: decimal("total_f931", { precision: 15, scale: 2 }).notNull(),
+    status: mysqlEnum("status", ["draft", "submitted", "paid"])
+      .default("draft")
+      .notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  }
+);
 
 export const argentinaTaxDeadlines = mysqlTable("argentina_tax_deadlines", {
   id: int("id").autoincrement().primaryKey(),
+  organizationId: int("organization_id").default(1).notNull(),
   taxName: varchar("tax_name", { length: 100 }).notNull(), // IVA, F.931, IIBB, Ganancias
   cuitEnding: varchar("cuit_ending", { length: 10 }).notNull(), // Ej: '0-1', '2-3', etc.
   dueDate: timestamp("due_date").notNull(),
   period: varchar("period", { length: 20 }).notNull(),
-  status: mysqlEnum("status", ["pending", "completed", "overdue"]).default("pending").notNull(),
+  status: mysqlEnum("status", ["pending", "completed", "overdue"])
+    .default("pending")
+    .notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 export const afipPadronSyncLog = mysqlTable("afip_padron_sync_log", {
   id: int("id").autoincrement().primaryKey(),
+  organizationId: int("organization_id").default(1).notNull(),
   cuit: varchar("cuit", { length: 20 }).notNull(),
   taxpayerName: varchar("taxpayer_name", { length: 255 }).notNull(),
   status: varchar("status", { length: 50 }).notNull(), // active, inactive, updated
@@ -404,25 +566,39 @@ export const liquidityProjections = mysqlTable("liquidity_projections", {
   id: int("id").autoincrement().primaryKey(),
   organizationId: int("organization_id").notNull(),
   projectionDate: timestamp("projection_date").notNull(),
-  projectedInflow: decimal("projected_inflow", { precision: 15, scale: 2 }).notNull(),
-  projectedOutflow: decimal("projected_outflow", { precision: 15, scale: 2 }).notNull(),
-  imminentTaxLiabilities: decimal("imminent_tax_liabilities", { precision: 15, scale: 2 }).notNull(),
+  projectedInflow: decimal("projected_inflow", {
+    precision: 15,
+    scale: 2,
+  }).notNull(),
+  projectedOutflow: decimal("projected_outflow", {
+    precision: 15,
+    scale: 2,
+  }).notNull(),
+  imminentTaxLiabilities: decimal("imminent_tax_liabilities", {
+    precision: 15,
+    scale: 2,
+  }).notNull(),
   netBalance: decimal("net_balance", { precision: 15, scale: 2 }).notNull(),
   riskDetected: int("risk_detected").default(0).notNull(), // 0 or 1
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-export const interbankingReconciliations = mysqlTable("interbanking_reconciliations", {
-  id: int("id").autoincrement().primaryKey(),
-  bankStatementId: int("bank_statement_id").notNull(),
-  vepReference: varchar("vep_reference", { length: 100 }).notNull(),
-  amount: decimal("amount", { precision: 15, scale: 2 }).notNull(),
-  matchedStatus: varchar("matched_status", { length: 50 }).notNull(), // auto_matched, manual_approved, pending
-  reconciledAt: timestamp("reconciled_at").defaultNow().notNull(),
-});
+export const interbankingReconciliations = mysqlTable(
+  "interbanking_reconciliations",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    organizationId: int("organization_id").default(1).notNull(),
+    bankStatementId: int("bank_statement_id").notNull(),
+    vepReference: varchar("vep_reference", { length: 100 }).notNull(),
+    amount: decimal("amount", { precision: 15, scale: 2 }).notNull(),
+    matchedStatus: varchar("matched_status", { length: 50 }).notNull(), // auto_matched, manual_approved, pending
+    reconciledAt: timestamp("reconciled_at").defaultNow().notNull(),
+  }
+);
 
 export const cctConceptTemplates = mysqlTable("cct_concept_templates", {
   id: int("id").autoincrement().primaryKey(),
+  organizationId: int("organization_id").default(1).notNull(),
   cctCode: varchar("cct_code", { length: 50 }).notNull(),
   conceptName: varchar("concept_name", { length: 255 }).notNull(),
   calculationFormula: text("calculation_formula").notNull(),

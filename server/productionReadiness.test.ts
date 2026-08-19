@@ -1,11 +1,24 @@
 import { describe, expect, it } from "vitest";
-import { calculateCctScenario, productionReadinessRouter } from "./routers/productionReadiness";
+import {
+  calculateCctScenario,
+  productionReadinessRouter,
+} from "./routers/productionReadiness";
 
 describe("EDV Production Readiness", () => {
   it("expone checklist, monitor de salud y simulador CCT", () => {
     expect(productionReadinessRouter).toBeDefined();
-    expect(productionReadinessRouter._def.procedures.getChecklist).toBeDefined();
-    expect(productionReadinessRouter._def.procedures.getExternalHealth).toBeDefined();
+    expect(
+      productionReadinessRouter._def.procedures.getChecklist
+    ).toBeDefined();
+    expect(
+      productionReadinessRouter._def.procedures.getExternalHealth
+    ).toBeDefined();
+    expect(
+      productionReadinessRouter._def.procedures.probeExternalService
+    ).toBeDefined();
+    expect(
+      productionReadinessRouter._def.procedures.runPreflight
+    ).toBeDefined();
     expect(productionReadinessRouter._def.procedures.simulateCct).toBeDefined();
   });
 
@@ -14,7 +27,9 @@ describe("EDV Production Readiness", () => {
       baseSalary: 1_600_000,
       employerRate: 0.24,
       employeeRate: 0.17,
-      concepts: [{ name: "Adicional", percent: 0.1, fixed: 0, kind: "earning" }],
+      concepts: [
+        { name: "Adicional", percent: 0.1, fixed: 0, kind: "earning" },
+      ],
     });
 
     expect(result.gross).toBe(1_760_000);
@@ -31,7 +46,14 @@ describe("EDV Production Readiness", () => {
       baseSalary: 100_000,
       employerRate: 0.24,
       employeeRate: 0.17,
-      concepts: [{ name: "Deducción extraordinaria", percent: 0, fixed: 1_000_000, kind: "deduction" }],
+      concepts: [
+        {
+          name: "Deducción extraordinaria",
+          percent: 0,
+          fixed: 1_000_000,
+          kind: "deduction",
+        },
+      ],
     });
 
     expect(result.net).toBe(0);

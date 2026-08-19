@@ -14,10 +14,12 @@ import {
   liquidityProjections,
   interbankingReconciliations,
   cctConceptTemplates,
+  tasks,
 } from "../drizzle/schema";
 import { eq, desc, sql, sum, and, gte, lte } from "drizzle-orm";
 import { storagePut } from "./storage";
 import { partnerProcedure } from "./_core/trpc";
+import { assertOrganizationAccess } from "./organizationAccess";
 import crypto from "crypto";
 
 export const enterpriseRouters = {
@@ -43,8 +45,13 @@ export const enterpriseRouters = {
         })
       )
       .mutation(async ({ input, ctx }) => {
+        await assertOrganizationAccess(ctx, input.organizationId, "write");
         const db = await getDb();
-        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de datos no disponible" });
+        if (!db)
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Base de datos no disponible",
+          });
         const [result] = await db.insert(accountingAccounts).values({
           organizationId: input.organizationId,
           code: input.code,
@@ -64,10 +71,24 @@ export const enterpriseRouters = {
         return { success: true, accountId: result.insertId };
       }),
     getGeneralLedger: partnerProcedure
-      .input(z.object({ organizationId: z.number(), accountId: z.number(), startDate: z.string().optional(), endDate: z.string().optional() }))
+      .input(
+        z.object({
+          organizationId: z.number(),
+          accountId: z.number(),
+          startDate: z.string().optional(),
+          endDate: z.string().optional(),
+        })
+      )
       .query(async ({ input }) => {
         const db = await getDb();
-        if (!db) return { account: null, movements: [], totalDebit: 0, totalCredit: 0, endingBalance: 0 };
+        if (!db)
+          return {
+            account: null,
+            movements: [],
+            totalDebit: 0,
+            totalCredit: 0,
+            endingBalance: 0,
+          };
 
         const [account] = await db
           .select()
@@ -75,7 +96,11 @@ export const enterpriseRouters = {
           .where(eq(accountingAccounts.id, input.accountId))
           .limit(1);
 
-        if (!account) throw new TRPCError({ code: "NOT_FOUND", message: "Cuenta contable no encontrada" });
+        if (!account)
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Cuenta contable no encontrada",
+          });
 
         const lines = await db
           .select({
@@ -89,7 +114,10 @@ export const enterpriseRouters = {
             concept: accountingJournalLines.concept,
           })
           .from(accountingJournalLines)
-          .innerJoin(accountingJournalEntries, eq(accountingJournalLines.entryId, accountingJournalEntries.id))
+          .innerJoin(
+            accountingJournalEntries,
+            eq(accountingJournalLines.entryId, accountingJournalEntries.id)
+          )
           .where(eq(accountingJournalLines.accountId, input.accountId))
           .orderBy(accountingJournalEntries.date);
 
@@ -127,7 +155,8 @@ export const enterpriseRouters = {
       .input(z.object({ organizationId: z.number() }))
       .query(async ({ input }) => {
         const db = await getDb();
-        if (!db) return { rows: [], sumDebits: 0, sumCredits: 0, balanced: true };
+        if (!db)
+          return { rows: [], sumDebits: 0, sumCredits: 0, balanced: true };
 
         const accounts = await db
           .select()
@@ -145,7 +174,10 @@ export const enterpriseRouters = {
               totalCredit: sum(accountingJournalLines.credit),
             })
             .from(accountingJournalLines)
-            .innerJoin(accountingAccounts, eq(accountingJournalLines.accountId, accountingAccounts.id))
+            .innerJoin(
+              accountingAccounts,
+              eq(accountingJournalLines.accountId, accountingAccounts.id)
+            )
             .where(sql`${accountingJournalLines.accountId} = ${acc.id}`);
 
           const debit = Number(res?.totalDebit ?? 0);
@@ -175,7 +207,11 @@ export const enterpriseRouters = {
       .input(z.object({ organizationId: z.number() }))
       .query(async ({ input }) => {
         const db = await getDb();
-        if (!db) return { balanceSheet: { assets: 0, liabilities: 0, equity: 0 }, incomeStatement: { revenue: 0, expenses: 0, netIncome: 0 } };
+        if (!db)
+          return {
+            balanceSheet: { assets: 0, liabilities: 0, equity: 0 },
+            incomeStatement: { revenue: 0, expenses: 0, netIncome: 0 },
+          };
 
         const accounts = await db
           .select()
@@ -195,12 +231,18 @@ export const enterpriseRouters = {
               totalCredit: sum(accountingJournalLines.credit),
             })
             .from(accountingJournalLines)
-            .innerJoin(accountingAccounts, eq(accountingJournalLines.accountId, accountingAccounts.id))
+            .innerJoin(
+              accountingAccounts,
+              eq(accountingJournalLines.accountId, accountingAccounts.id)
+            )
             .where(sql`${accountingJournalLines.accountId} = ${acc.id}`);
 
           const debit = Number(res?.totalDebit ?? 0);
           const credit = Number(res?.totalCredit ?? 0);
-          const net = acc.type === "asset" || acc.type === "expense" ? debit - credit : credit - debit;
+          const net =
+            acc.type === "asset" || acc.type === "expense"
+              ? debit - credit
+              : credit - debit;
 
           if (acc.type === "asset") totalAssets += net;
           if (acc.type === "liability") totalLiabilities += net;
@@ -242,11 +284,22 @@ export const enterpriseRouters = {
         })
       )
       .mutation(async ({ input, ctx }) => {
+        await assertOrganizationAccess(ctx, input.organizationId, "write");
         const db = await getDb();
-        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de datos no disponible" });
+        if (!db)
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Base de datos no disponible",
+          });
 
-        const totalDebit = input.lines.reduce((acc, l) => acc + Number(l.debit), 0);
-        const totalCredit = input.lines.reduce((acc, l) => acc + Number(l.credit), 0);
+        const totalDebit = input.lines.reduce(
+          (acc, l) => acc + Number(l.debit),
+          0
+        );
+        const totalCredit = input.lines.reduce(
+          (acc, l) => acc + Number(l.credit),
+          0
+        );
 
         if (Math.abs(totalDebit - totalCredit) > 0.01) {
           throw new TRPCError({
@@ -301,30 +354,70 @@ export const enterpriseRouters = {
         securityMode: "Strict RBAC + Audit Logging",
       };
     }),
-    listBackups: partnerProcedure.query(async () => {
-      const db = await getDb();
-      if (!db) return [];
-      return await db.select().from(backupAuditLogs).orderBy(desc(backupAuditLogs.createdAt)).limit(20);
-    }),
-    triggerBackup: partnerProcedure.mutation(async ({ ctx }) => {
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de datos no disponible" });
+    listBackups: partnerProcedure
+      .input(
+        z.object({ organizationId: z.number().int().positive().default(1) })
+      )
+      .query(async ({ ctx, input }) => {
+        await assertOrganizationAccess(ctx, input.organizationId, "read");
+        const db = await getDb();
+        if (!db) return [];
+        return await db
+          .select()
+          .from(backupAuditLogs)
+          .where(eq(backupAuditLogs.organizationId, input.organizationId))
+          .orderBy(desc(backupAuditLogs.createdAt))
+          .limit(20);
+      }),
+    triggerBackup: partnerProcedure
+      .input(
+        z.object({ organizationId: z.number().int().positive().default(1) })
+      )
+      .mutation(async ({ ctx, input }) => {
+        await assertOrganizationAccess(ctx, input.organizationId, "read");
+        const db = await getDb();
+        if (!db)
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Base de datos no disponible",
+          });
 
-      const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-      const backupContent = JSON.stringify({ backupTime: new Date(), version: "EDV Enterprise v4.6" }, null, 2);
-      const storageKey = `backups/edv_backup_${timestamp}.json`;
-      const uploaded = await storagePut(storageKey, Buffer.from(backupContent), "application/json");
+        const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+        const backupContent = JSON.stringify(
+          {
+            organizationId: input.organizationId,
+            backupTime: new Date(),
+            version: "EDV Enterprise v7.0",
+            scope: "operational_manifest",
+            physicalDatabaseBackup: "external_hosting_policy_required",
+          },
+          null,
+          2
+        );
+        const storageKey = `backups/edv_backup_${timestamp}.json`;
+        const uploaded = await storagePut(
+          storageKey,
+          Buffer.from(backupContent),
+          "application/json"
+        );
 
-      const [res] = await db.insert(backupAuditLogs).values({
-        backupType: "database_snapshot_json",
-        status: "success",
-        s3Url: uploaded.url,
-        sizeBytes: Buffer.byteLength(backupContent),
-        triggeredBy: ctx.user.id,
-      });
+        const [res] = await db.insert(backupAuditLogs).values({
+          organizationId: input.organizationId,
+          backupType: "operational_manifest",
+          status: "success",
+          s3Url: uploaded.url,
+          sizeBytes: Buffer.byteLength(backupContent),
+          triggeredBy: ctx.user.id,
+        });
 
-      return { success: true, backupId: res.insertId, url: uploaded.url };
-    }),
+        return {
+          success: true,
+          mode: "manifest_only" as const,
+          backupId: res.insertId,
+          url: uploaded.url,
+          physicalDatabaseBackupRequired: true,
+        };
+      }),
   },
 
   // Núcleo Argentino: F.931 CCT 130/75 y Vencimientos
@@ -337,7 +430,12 @@ export const enterpriseRouters = {
         return await db
           .select()
           .from(argentinaPayrollDeclarations)
-          .where(eq(argentinaPayrollDeclarations.organizationId, input.organizationId))
+          .where(
+            eq(
+              argentinaPayrollDeclarations.organizationId,
+              input.organizationId
+            )
+          )
           .orderBy(desc(argentinaPayrollDeclarations.createdAt));
       }),
     generateF931: partnerProcedure
@@ -350,8 +448,13 @@ export const enterpriseRouters = {
         })
       )
       .mutation(async ({ input, ctx }) => {
+        await assertOrganizationAccess(ctx, input.organizationId, "write");
         const db = await getDb();
-        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de datos no disponible" });
+        if (!db)
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Base de datos no disponible",
+          });
 
         const gross = Number(input.grossPayroll);
         // CCT 130/75 contribuciones patronales y aportes sindicales/ley
@@ -378,25 +481,62 @@ export const enterpriseRouters = {
           details: `F.931 generado para período ${input.period} por un total de $${totalF931.toFixed(2)}`,
         });
 
-        return { success: true, declarationId: res.insertId, totalF931: totalF931.toFixed(2) };
+        return {
+          success: true,
+          declarationId: res.insertId,
+          totalF931: totalF931.toFixed(2),
+        };
       }),
-    getTaxDeadlines: partnerProcedure.query(async () => {
-      const db = await getDb();
-      if (!db) return [];
-      const deadlines = await db.select().from(argentinaTaxDeadlines).orderBy(argentinaTaxDeadlines.dueDate);
-      if (deadlines.length === 0) {
-        const sampleDeadlines = [
-          { taxName: "IVA - Declaración Jurada Mensual (AFIP)", cuitEnding: "0-1", dueDate: new Date(Date.now() + 86400000 * 3), period: "2026-07", status: "pending" as const },
-          { taxName: "F.931 - Cargas Sociales SIPA/OS (AFIP)", cuitEnding: "General", dueDate: new Date(Date.now() + 86400000 * 7), period: "2026-07", status: "pending" as const },
-          { taxName: "IIBB - Convenio Multilateral (AGIP/ARBA)", cuitEnding: "2-3", dueDate: new Date(Date.now() + 86400000 * 12), period: "2026-07", status: "pending" as const },
-        ];
-        for (const d of sampleDeadlines) {
-          await db.insert(argentinaTaxDeadlines).values(d);
+    getTaxDeadlines: partnerProcedure
+      .input(
+        z.object({ organizationId: z.number().int().positive().default(1) })
+      )
+      .query(async ({ ctx, input }) => {
+        await assertOrganizationAccess(ctx, input.organizationId, "read");
+        const db = await getDb();
+        if (!db) return [];
+        const deadlines = await db
+          .select()
+          .from(argentinaTaxDeadlines)
+          .where(eq(argentinaTaxDeadlines.organizationId, input.organizationId))
+          .orderBy(argentinaTaxDeadlines.dueDate);
+        if (deadlines.length === 0) {
+          const sampleDeadlines = [
+            {
+              organizationId: input.organizationId,
+              taxName: "IVA - Declaración Jurada Mensual (AFIP)",
+              cuitEnding: "0-1",
+              dueDate: new Date(Date.now() + 86400000 * 3),
+              period: "2026-07",
+              status: "pending" as const,
+            },
+            {
+              organizationId: input.organizationId,
+              taxName: "F.931 - Cargas Sociales SIPA/OS (AFIP)",
+              cuitEnding: "General",
+              dueDate: new Date(Date.now() + 86400000 * 7),
+              period: "2026-07",
+              status: "pending" as const,
+            },
+            {
+              organizationId: input.organizationId,
+              taxName: "IIBB - Convenio Multilateral (AGIP/ARBA)",
+              cuitEnding: "2-3",
+              dueDate: new Date(Date.now() + 86400000 * 12),
+              period: "2026-07",
+              status: "pending" as const,
+            },
+          ];
+          for (const d of sampleDeadlines) {
+            await db.insert(argentinaTaxDeadlines).values(d);
+          }
+          return await db
+            .select()
+            .from(argentinaTaxDeadlines)
+            .orderBy(argentinaTaxDeadlines.dueDate);
         }
-        return await db.select().from(argentinaTaxDeadlines).orderBy(argentinaTaxDeadlines.dueDate);
-      }
-      return deadlines;
-    }),
+        return deadlines;
+      }),
   },
 
   // Firma Digital PAdES / RFC 3161 TSA Individual y Masiva
@@ -405,18 +545,38 @@ export const enterpriseRouters = {
       .input(
         z.object({
           taskId: z.number(),
+          organizationId: z.number().int().positive().default(1),
           recipientEmail: z.string(),
           documentContent: z.string(),
         })
       )
       .mutation(async ({ input, ctx }) => {
+        await assertOrganizationAccess(ctx, input.organizationId, "write");
         const db = await getDb();
-        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de datos no disponible" });
+        if (!db)
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Base de datos no disponible",
+          });
+        const taskRows = await db
+          .select()
+          .from(tasks)
+          .where(eq(tasks.id, input.taskId))
+          .limit(1);
+        if (taskRows[0] && taskRows[0].organizationId !== input.organizationId)
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "La tarea está fuera de la organización seleccionada",
+          });
 
-        const hash = crypto.createHash("sha256").update(input.documentContent + Date.now()).digest("hex");
+        const hash = crypto
+          .createHash("sha256")
+          .update(input.documentContent + Date.now())
+          .digest("hex");
         const signatureToken = `EDV-PAdES-RFC3161-TSA-${hash.substring(0, 32).toUpperCase()}`;
 
         const [res] = await db.insert(edvCertificates).values({
+          organizationId: input.organizationId,
           taskId: input.taskId,
           recipientEmail: input.recipientEmail,
           signatureHash: signatureToken,
@@ -433,15 +593,17 @@ export const enterpriseRouters = {
 
         return {
           success: true,
+          mode: "prepared" as const,
           certificateId: res.insertId,
           signatureHash: signatureToken,
-          timestampAuthority: "EDV Certified RFC 3161 TimeStamping Authority",
-          legalValidity: "Válido ante AFIP, IGJ y Poder Judicial según Ley 25.506 y pauta ONTI",
+          timestampAuthority: "TSA pendiente de proveedor externo",
+          legalValidity: "pending_external_provider",
         };
       }),
     signBulkFinancialStatements: partnerProcedure
       .input(
         z.object({
+          organizationId: z.number().int().positive().default(1),
           documents: z.array(
             z.object({
               taskId: z.number(),
@@ -452,15 +614,38 @@ export const enterpriseRouters = {
         })
       )
       .mutation(async ({ input, ctx }) => {
+        await assertOrganizationAccess(ctx, input.organizationId, "write");
         const db = await getDb();
-        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de datos no disponible" });
+        if (!db)
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Base de datos no disponible",
+          });
 
         const signedResults = [];
         for (const doc of input.documents) {
-          const hash = crypto.createHash("sha256").update(doc.title + doc.recipientEmail + Date.now() + Math.random()).digest("hex");
+          const taskRows = await db
+            .select()
+            .from(tasks)
+            .where(eq(tasks.id, doc.taskId))
+            .limit(1);
+          if (
+            taskRows[0] &&
+            taskRows[0].organizationId !== input.organizationId
+          )
+            throw new TRPCError({
+              code: "FORBIDDEN",
+              message:
+                "Una tarea del lote está fuera de la organización seleccionada",
+            });
+          const hash = crypto
+            .createHash("sha256")
+            .update(doc.title + doc.recipientEmail + Date.now() + Math.random())
+            .digest("hex");
           const signatureToken = `EDV-BULK-PADES-${hash.substring(0, 32).toUpperCase()}`;
 
           const [res] = await db.insert(edvCertificates).values({
+            organizationId: input.organizationId,
             taskId: doc.taskId,
             recipientEmail: doc.recipientEmail,
             signatureHash: signatureToken,
@@ -486,80 +671,118 @@ export const enterpriseRouters = {
           success: true,
           signedCount: signedResults.length,
           certificates: signedResults,
-          timestampAuthority: "EDV Certified RFC 3161 TimeStamping Authority",
+          mode: "prepared" as const,
+          timestampAuthority: "TSA pendiente de proveedor externo",
         };
       }),
-    syncAfipPadron: partnerProcedure.mutation(async ({ ctx }) => {
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de datos no disponible" });
-      
-      const [ins] = await db.insert(afipPadronSyncLog).values({
-        cuit: "30-71234567-9",
-        taxpayerName: "EDV S.A. (Sincronización Automática Diaria)",
-        status: "active",
-        taxCategory: "Responsable Inscripto / Monotributo",
-        syncDetails: "Constancias de inscripción y padrón actualizadas vía Web Service AFIP (Homologación).",
-      });
+    syncAfipPadron: partnerProcedure
+      .input(
+        z.object({ organizationId: z.number().int().positive().default(1) })
+      )
+      .mutation(async ({ ctx, input }) => {
+        await assertOrganizationAccess(ctx, input.organizationId, "write");
+        const db = await getDb();
+        if (!db)
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Base de datos no disponible",
+          });
 
-      await db.insert(auditLog).values({
-        userId: ctx.user.id,
-        action: "SYNC_AFIP_PADRON_DAILY",
-        entityType: "afip_padron_sync_log",
-        entityId: ins.insertId,
-        details: "Sincronización automática diaria de padrón AFIP y constancias ejecutada exitosamente con persistencia.",
-      });
+        const [ins] = await db.insert(afipPadronSyncLog).values({
+          organizationId: input.organizationId,
+          cuit: "30-71234567-9",
+          taxpayerName: "EDV S.A. (Sincronización Automática Diaria)",
+          status: "active",
+          taxCategory: "Responsable Inscripto / Monotributo",
+          syncDetails:
+            "Constancias de inscripción y padrón actualizadas vía Web Service AFIP (Homologación).",
+        });
 
-      return {
-        success: true,
-        message: "Padrón AFIP sincronizado para todos los clientes activos. Constancias de inscripción persistidas.",
-        timestamp: Date.now(),
-        updatedRecords: 12,
-        syncLogId: ins.insertId,
-      };
-    }),
-    checkCashFlowRiskAlerts: partnerProcedure.query(async () => {
-      const db = await getDb();
-      if (!db) {
+        await db.insert(auditLog).values({
+          userId: ctx.user.id,
+          action: "SYNC_AFIP_PADRON_DAILY",
+          entityType: "afip_padron_sync_log",
+          entityId: ins.insertId,
+          details:
+            "Sincronización automática diaria de padrón AFIP y constancias ejecutada exitosamente con persistencia.",
+        });
+
         return {
+          success: true,
+          mode: "homologation_simulation" as const,
+          message:
+            "Registro de sincronización de padrón preparado en homologación; la consulta real requiere certificado y autorización ARCA.",
+          timestamp: Date.now(),
+          updatedRecords: 0,
+          syncLogId: ins.insertId,
+        };
+      }),
+    checkCashFlowRiskAlerts: partnerProcedure
+      .input(
+        z.object({ organizationId: z.number().int().positive().default(1) })
+      )
+      .query(async ({ ctx, input }) => {
+        await assertOrganizationAccess(ctx, input.organizationId, "read");
+        const db = await getDb();
+        if (!db) {
+          return {
+            mode: "internal_projection" as const,
+            riskDetected: true,
+            projectedBalance: 450000,
+            imminentTaxLiabilities: 620000,
+            shortfall: 170000,
+            warningMessage:
+              "Riesgo de liquidez detectado: El pasivo fiscal imminente supera el flujo de caja proyectado.",
+            recommendations: [
+              "Postergar pagos no críticos",
+              "Generar VEP parcial",
+            ],
+          };
+        }
+
+        await db.insert(liquidityProjections).values({
+          organizationId: input.organizationId,
+          projectionDate: new Date(),
+          projectedInflow: "450000.00",
+          projectedOutflow: "280000.00",
+          imminentTaxLiabilities: "620000.00",
+          netBalance: "-170000.00",
+          riskDetected: 1,
+        });
+
+        return {
+          mode: "internal_projection" as const,
           riskDetected: true,
           projectedBalance: 450000,
           imminentTaxLiabilities: 620000,
           shortfall: 170000,
-          warningMessage: "Riesgo de liquidez detectado: El pasivo fiscal imminente supera el flujo de caja proyectado.",
-          recommendations: ["Postergar pagos no críticos", "Generar VEP parcial"],
+          warningMessage:
+            "Riesgo de liquidez detectado y persistido: El pasivo fiscal imminente supera el flujo de caja proyectado para los próximos 7 días.",
+          recommendations: [
+            "Postergar pagos a proveedores no críticos hasta la acreditación de cobranzas.",
+            "Generar VEP parcial o solicitar plan de facilidades permanente.",
+          ],
         };
-      }
-
-      await db.insert(liquidityProjections).values({
-        organizationId: 1,
-        projectionDate: new Date(),
-        projectedInflow: "450000.00",
-        projectedOutflow: "280000.00",
-        imminentTaxLiabilities: "620000.00",
-        netBalance: "-170000.00",
-        riskDetected: 1,
-      });
-
-      return {
-        riskDetected: true,
-        projectedBalance: 450000,
-        imminentTaxLiabilities: 620000,
-        shortfall: 170000,
-        warningMessage: "Riesgo de liquidez detectado y persistido: El pasivo fiscal imminente supera el flujo de caja proyectado para los próximos 7 días.",
-        recommendations: [
-          "Postergar pagos a proveedores no críticos hasta la acreditación de cobranzas.",
-          "Generar VEP parcial o solicitar plan de facilidades permanente.",
-        ],
-      };
-    }),
+      }),
     autoReconcileInterbanking: partnerProcedure
-      .input(z.object({ bankStatementId: z.number().optional() }))
+      .input(
+        z.object({
+          organizationId: z.number().int().positive().default(1),
+          bankStatementId: z.number().optional(),
+        })
+      )
       .mutation(async ({ ctx, input }) => {
+        await assertOrganizationAccess(ctx, input.organizationId, "write");
         const db = await getDb();
-        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de datos no disponible" });
+        if (!db)
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Base de datos no disponible",
+          });
 
         const stmtId = input.bankStatementId || 1;
         const [rec] = await db.insert(interbankingReconciliations).values({
+          organizationId: input.organizationId,
           bankStatementId: stmtId,
           vepReference: `VEP-${Math.floor(100000 + Math.random() * 900000)}`,
           amount: "225000.00",
@@ -576,15 +799,17 @@ export const enterpriseRouters = {
 
         return {
           success: true,
+          mode: "homologation_simulation" as const,
           matchedCount: 1,
           reconciledAmount: 225000,
-          status: "Fully Reconciled",
+          status: "Prepared for human review",
           reconciliationId: rec.insertId,
         };
       }),
     manageCctConceptTemplates: partnerProcedure
       .input(
         z.object({
+          organizationId: z.number().int().positive().default(1),
           cctCode: z.string(),
           conceptName: z.string(),
           calculationFormula: z.string(),
@@ -592,10 +817,16 @@ export const enterpriseRouters = {
         })
       )
       .mutation(async ({ ctx, input }) => {
+        await assertOrganizationAccess(ctx, input.organizationId, "write");
         const db = await getDb();
-        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de datos no disponible" });
+        if (!db)
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Base de datos no disponible",
+          });
 
         const [tpl] = await db.insert(cctConceptTemplates).values({
+          organizationId: input.organizationId,
           cctCode: input.cctCode,
           conceptName: input.conceptName,
           calculationFormula: input.calculationFormula,
@@ -618,58 +849,110 @@ export const enterpriseRouters = {
         };
       }),
     mtlsAfipConnect: partnerProcedure
-      .input(z.object({ environment: z.enum(["homologation", "production"]), cuit: z.string() }))
+      .input(
+        z.object({
+          organizationId: z.number().int().positive().default(1),
+          environment: z.enum(["homologation", "production"]),
+          cuit: z.string(),
+        })
+      )
       .mutation(async ({ ctx, input }) => {
+        await assertOrganizationAccess(ctx, input.organizationId, "write");
         const db = await getDb();
-        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de datos no disponible" });
+        if (!db)
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Base de datos no disponible",
+          });
 
         await db.insert(auditLog).values({
           userId: ctx.user.id,
           action: "MTLS_AFIP_CONNECT",
           entityType: "system",
           entityId: 0,
-          details: `Conexión mTLS establecida con Web Services AFIP en ambiente ${input.environment} para CUIT ${input.cuit}`,
+          details: `Solicitud mTLS AFIP preparada para organización ${input.organizationId}, ambiente ${input.environment} y CUIT ${input.cuit}. La conexión productiva requiere certificado y autorización externa.`,
         });
 
         return {
           success: true,
-          status: "Connected Securely",
+          mode:
+            input.environment === "production"
+              ? ("prepared" as const)
+              : ("homologation_simulation" as const),
+          status:
+            input.environment === "production"
+              ? "Pending External Certificate"
+              : "Homologation Ready",
           environment: input.environment,
           cuit: input.cuit,
-          tlsVersion: "TLSv1.3",
-          cipherSuite: "ECDHE-RSA-AES256-GCM-SHA384",
-          message: `Túnel mTLS y autenticación WSAA establecidos exitosamente con AFIP (${input.environment}).`,
+          tlsVersion: "pending_external_handshake",
+          cipherSuite: "pending_external_handshake",
+          message:
+            input.environment === "production"
+              ? "Configuración mTLS preparada; cargar certificado y relación WSAA/ARCA para conectar producción."
+              : "Flujo mTLS de homologación preparado; todavía no se afirma una conexión oficial.",
         };
       }),
-    getInterbankingTimeline: partnerProcedure.query(async () => {
-      const db = await getDb();
-      if (!db) {
-        return {
-          timeline: [
-            { date: "2026-08-01", totalReconciled: 450000, count: 2 },
-            { date: "2026-08-05", totalReconciled: 890000, count: 4 },
-            { date: "2026-08-10", totalReconciled: 1250000, count: 6 },
-          ],
-        };
-      }
-
-      const rows = await db.select().from(interbankingReconciliations).orderBy(desc(interbankingReconciliations.reconciledAt)).limit(10);
-      return {
-        timeline: rows.map((r) => ({
-          date: new Date(r.reconciledAt).toISOString().split("T")[0],
-          totalReconciled: Number(r.amount),
-          count: 1,
-          vepReference: r.vepReference,
-        })),
-      };
-    }),
-    generateCctPayrollSlips: partnerProcedure
-      .input(z.object({ cctCode: z.string(), period: z.string(), organizationId: z.number() }))
-      .mutation(async ({ ctx, input }) => {
+    getInterbankingTimeline: partnerProcedure
+      .input(
+        z.object({ organizationId: z.number().int().positive().default(1) })
+      )
+      .query(async ({ ctx, input }) => {
+        await assertOrganizationAccess(ctx, input.organizationId, "read");
         const db = await getDb();
-        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de datos no disponible" });
+        if (!db) {
+          return {
+            timeline: [
+              { date: "2026-08-01", totalReconciled: 450000, count: 2 },
+              { date: "2026-08-05", totalReconciled: 890000, count: 4 },
+              { date: "2026-08-10", totalReconciled: 1250000, count: 6 },
+            ],
+          };
+        }
 
-        const templates = await db.select().from(cctConceptTemplates).where(eq(cctConceptTemplates.cctCode, input.cctCode));
+        const rows = await db
+          .select()
+          .from(interbankingReconciliations)
+          .where(
+            eq(interbankingReconciliations.organizationId, input.organizationId)
+          )
+          .orderBy(desc(interbankingReconciliations.reconciledAt))
+          .limit(10);
+        return {
+          timeline: rows.map(r => ({
+            date: new Date(r.reconciledAt).toISOString().split("T")[0],
+            totalReconciled: Number(r.amount),
+            count: 1,
+            vepReference: r.vepReference,
+          })),
+        };
+      }),
+    generateCctPayrollSlips: partnerProcedure
+      .input(
+        z.object({
+          cctCode: z.string(),
+          period: z.string(),
+          organizationId: z.number().int().positive().default(1),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        await assertOrganizationAccess(ctx, input.organizationId, "write");
+        const db = await getDb();
+        if (!db)
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Base de datos no disponible",
+          });
+
+        const templates = await db
+          .select()
+          .from(cctConceptTemplates)
+          .where(
+            and(
+              eq(cctConceptTemplates.cctCode, input.cctCode),
+              eq(cctConceptTemplates.organizationId, input.organizationId)
+            )
+          );
 
         await db.insert(auditLog).values({
           userId: ctx.user.id,
@@ -681,10 +964,11 @@ export const enterpriseRouters = {
 
         return {
           success: true,
-          message: `Recibos de sueldo generados masivamente para CCT ${input.cctCode} período ${input.period}.`,
+          message: `Lote de recibos preparado para CCT ${input.cctCode} período ${input.period}; requiere validación y firma externa.`,
           appliedTemplatesCount: templates.length,
-          generatedSlipsCount: 15,
-          status: "Ready for PAdES Signature",
+          generatedSlipsCount: 0,
+          mode: "prepared" as const,
+          status: "Ready for external PAdES/TSA provider",
         };
       }),
     getExternalProductionGuide: partnerProcedure.query(async () => {
@@ -693,28 +977,32 @@ export const enterpriseRouters = {
           {
             step: 1,
             title: "Generación de Solicitud de Certificado (CSR)",
-            description: "Generar clave privada y CSR en el portal de AFIP / ARCA mediante el servicio 'Administración de Certificados Digitales'.",
+            description:
+              "Generar clave privada y CSR en el portal de AFIP / ARCA mediante el servicio 'Administración de Certificados Digitales'.",
             requiresUserAction: true,
             status: "Pending User Action",
           },
           {
             step: 2,
             title: "Asociación de Relación en ARCA",
-            description: "Vincular el servicio WSFEv1 o WSPUC con el CUIT del desarrollador o la empresa en el Administrador de Relaciones.",
+            description:
+              "Vincular el servicio WSFEv1 o WSPUC con el CUIT del desarrollador o la empresa en el Administrador de Relaciones.",
             requiresUserAction: true,
             status: "Pending User Action",
           },
           {
             step: 3,
             title: "Carga de Certificados X.509 en EDV",
-            description: "Subir el certificado institucional (.crt) y la clave privada (.key) en el panel de configuración segura de mTLS.",
+            description:
+              "Subir el certificado institucional (.crt) y la clave privada (.key) en el panel de configuración segura de mTLS.",
             requiresUserAction: true,
             status: "Ready in EDV",
           },
           {
             step: 4,
             title: "Homologación y Pase a Producción",
-            description: "Ejecutar pruebas en entorno de homologación AFIP y posteriormente conmutar el switch a producción.",
+            description:
+              "Ejecutar pruebas en entorno de homologación AFIP y posteriormente conmutar el switch a producción.",
             requiresUserAction: false,
             status: "Automated in EDV",
           },
@@ -724,10 +1012,30 @@ export const enterpriseRouters = {
     getExternalHealthMonitor: partnerProcedure.query(async () => {
       return {
         services: [
-          { name: "AFIP WSAA / WSFEv1 (Producción)", status: "Standby (Requires Certs)", latencyMs: 0, uptime: "100%" },
-          { name: "Interbanking API (Producción)", status: "Standby (Requires Token)", latencyMs: 0, uptime: "100%" },
-          { name: "AFIP Padrón A5 (Homologación)", status: "Online", latencyMs: 145, uptime: "99.9%" },
-          { name: "Motor Python Contable (EDV Organs)", status: "Online", latencyMs: 12, uptime: "100%" },
+          {
+            name: "AFIP WSAA / WSFEv1 (Producción)",
+            status: "Standby (Requires Certs)",
+            latencyMs: 0,
+            uptime: "100%",
+          },
+          {
+            name: "Interbanking API (Producción)",
+            status: "Standby (Requires Token)",
+            latencyMs: 0,
+            uptime: "100%",
+          },
+          {
+            name: "AFIP Padrón A5 (Homologación)",
+            status: "Online",
+            latencyMs: 145,
+            uptime: "99.9%",
+          },
+          {
+            name: "Motor Python Contable (EDV Organs)",
+            status: "Online",
+            latencyMs: 12,
+            uptime: "100%",
+          },
         ],
       };
     }),

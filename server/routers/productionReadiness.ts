@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { partnerProcedure, router } from "../_core/trpc";
 import { runPreflight } from "../lib/preflightValidation";
+import { buildRetryPlan, classifyExternalFailure, describeServiceState } from "../externalHealth";
 
 export function calculateCctScenario(input: { baseSalary: number; employerRate: number; employeeRate: number; concepts: Array<{ name: string; percent: number; fixed: number; kind: "earning" | "deduction" }> }) {
   const variableConcepts = input.concepts.reduce((total, concept) => total + input.baseSalary * concept.percent + concept.fixed, 0);
@@ -84,7 +85,13 @@ const externalServices = [
 
 export const productionReadinessRouter = router({
   getChecklist: partnerProcedure.query(() => ({ generatedAt: new Date().toISOString(), steps: readinessSteps })),
-  getExternalHealth: partnerProcedure.query(() => ({ checkedAt: new Date().toISOString(), services: externalServices })),
+  getExternalHealth: partnerProcedure.query(() => ({ checkedAt: new Date().toISOString(), services: externalServices.map(service => ({ ...service, stateDescription: describeServiceState(service.status === "online" || service.status === "homologation" || service.status === "blocked" ? service.status : "failed"), retry: buildRetryPlan(service.status === "online" || service.status === "homologation" || service.status === "blocked" ? service.status : "failed", 0) })) })),
+  probeExternalService: partnerProcedure
+    .input(z.object({ serviceId: z.string().min(1), configured: z.boolean(), reachable: z.boolean(), statusCode: z.number().int().optional(), attempt: z.number().int().nonnegative().default(0) }))
+    .mutation(({ input }) => {
+      const state = classifyExternalFailure(input);
+      return { serviceId: input.serviceId, checkedAt: new Date().toISOString(), state, stateDescription: describeServiceState(state), retry: buildRetryPlan(state, input.attempt) };
+    }),
   runPreflight: partnerProcedure
     .input(z.object({ cuit: z.string(), certPem: z.string(), csvData: z.string(), debit: z.number(), credit: z.number() }))
     .mutation(({ input }) => runPreflight(input)),

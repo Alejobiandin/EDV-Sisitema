@@ -55,6 +55,7 @@ describe("executeCognitiveAgentTask strict validation", () => {
     const { executeCognitiveAgentTask } = await import("./agentEngine");
     await expect(
       executeCognitiveAgentTask({
+        organizationId: 1,
         agentId: 1,
         taskType: "tax_computation",
         payload: { clientId: 999999, grossSales: 100000, vatPurchases: 10000 },
@@ -67,6 +68,7 @@ describe("executeCognitiveAgentTask strict validation", () => {
     const { executeCognitiveAgentTask } = await import("./agentEngine");
     await expect(
       executeCognitiveAgentTask({
+        organizationId: 1,
         agentId: 3,
         taskType: "payroll_liquidation",
         payload: { employeeId: 888888, baseSalary: 500000 },

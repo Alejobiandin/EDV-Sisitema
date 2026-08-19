@@ -3,8 +3,10 @@ import { getDb } from "./db";
 import { agents, organizationalDnaRules, organizationalDnaPolicies, tasks, taskExecutions, auditLog, notifications, edvClients, edvEmployees } from "../drizzle/schema";
 import { eq } from "drizzle-orm";
 import { runPythonCalculation } from "./pythonBridge";
+import { buildAgentCoordinationPlan } from "./agentCoordination";
 
 export type AgentTaskInput = {
+  organizationId: number;
   agentId: number;
   taskType: "tax_computation" | "payroll_liquidation" | "social_charges" | "accounting_review";
   payload: {
@@ -86,6 +88,7 @@ export async function executeCognitiveAgentTask(input: AgentTaskInput) {
     if (!clientRows[0]) {
       throw new Error(`Cliente con ID ${clientId} no encontrado en el padrón institucional EDV`);
     }
+    if (clientRows[0].organizationId !== input.organizationId) throw new Error("Cliente fuera de la organización de la tarea");
     clientName = clientRows[0].name;
     input.payload.clientName = clientName;
     input.payload.clientTaxId = clientRows[0].taxId;
@@ -97,6 +100,8 @@ export async function executeCognitiveAgentTask(input: AgentTaskInput) {
     if (!employeeRows[0]) {
       throw new Error(`Empleado con ID ${employeeId} no encontrado en la nómina institucional EDV`);
     }
+    const employeeClient = await db.select().from(edvClients).where(eq(edvClients.id, employeeRows[0].clientId)).limit(1);
+    if (!employeeClient[0] || employeeClient[0].organizationId !== input.organizationId) throw new Error("Empleado fuera de la organización de la tarea");
     input.payload.employeeName = employeeRows[0].fullName;
     input.payload.employeeTaxId = employeeRows[0].taxIdNumber;
     input.payload.baseSalary = Number(employeeRows[0].baseSalary);
@@ -112,7 +117,8 @@ export async function executeCognitiveAgentTask(input: AgentTaskInput) {
 
   await db.update(agents).set({ status: "in_task" }).where(eq(agents.id, agent.id));
   const deterministic = await calculateDeterministicAccounting(input, rules);
-  let requiresApproval = deterministic.requiresApproval;
+  const coordination = buildAgentCoordinationPlan(input.taskType);
+  let requiresApproval = deterministic.requiresApproval || coordination.requiresHumanApproval;
   let llmInsight = deterministic.summary;
 
   try {
@@ -122,7 +128,9 @@ ${dnaContext || "No hay reglas cargadas todavía; declara esa ausencia."}
 
 Datos de la tarea:
 Tipo: ${input.taskType}
+Organización: ${input.organizationId}
 Payload: ${JSON.stringify(input.payload)}
+Plan de coordinación: ${JSON.stringify(coordination)}
 Resultado determinístico preliminar (calculado por motor Python EDV): ${JSON.stringify(deterministic.result)}
 
 Genera una justificación técnica profesional, cita el criterio institucional utilizado cuando exista y determina si requiere revisión humana por riesgo normativo o umbral de monto. Responde únicamente con JSON válido.`;
@@ -167,7 +175,8 @@ Genera una justificación técnica profesional, cita el criterio institucional u
   const taskStatus = requiresApproval ? "pending_approval" : "completed";
   const insertedTask = await db.insert(tasks).values({
     name: `${agent.name}: ${input.taskType.replaceAll("_", " ").toUpperCase()} - ${input.payload.clientName ?? "Cliente"}`,
-    description: JSON.stringify({ taskType: input.taskType, inputPayload: input.payload, outputResult: { deterministicResult: deterministic.result, justification: llmInsight }, risk: requiresApproval ? "high" : "low" }),
+    organizationId: input.organizationId,
+    description: JSON.stringify({ taskType: input.taskType, organizationId: input.organizationId, inputPayload: input.payload, outputResult: { deterministicResult: deterministic.result, justification: llmInsight }, coordination, risk: requiresApproval ? "high" : "low" }),
     status: taskStatus,
     approvalStatus: requiresApproval ? "pending" : "not_required",
     approvalRequestedAt: requiresApproval ? new Date() : null,
@@ -180,7 +189,7 @@ Genera una justificación técnica profesional, cita el criterio institucional u
     agentId: agent.id,
     step: "Cálculo determinístico Python y razonamiento cognitivo EDV",
     status: "completed",
-    log: JSON.stringify({ taskType: input.taskType, requiresApproval, justification: llmInsight }),
+    log: JSON.stringify({ taskType: input.taskType, organizationId: input.organizationId, requiresApproval, justification: llmInsight, coordination }),
     endTime: new Date(),
   });
   await db.update(agents).set({ status: "active" }).where(eq(agents.id, agent.id));
@@ -190,7 +199,7 @@ Genera una justificación técnica profesional, cita el criterio institucional u
     action: `Ejecución de tarea ${input.taskType}`,
     entityType: "task",
     entityId: taskId,
-    details: JSON.stringify({ taskType: input.taskType, requiresApproval, status: taskStatus }),
+    details: JSON.stringify({ taskType: input.taskType, organizationId: input.organizationId, requiresApproval, status: taskStatus, coordination }),
   });
 
   if (requiresApproval) {
@@ -219,5 +228,7 @@ Genera una justificación técnica profesional, cita el criterio institucional u
     deterministicResult: deterministic.result,
     justification: llmInsight,
     requiresApproval,
+    organizationId: input.organizationId,
+    coordination,
   };
 }

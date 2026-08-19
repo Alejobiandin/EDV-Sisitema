@@ -2,7 +2,8 @@ import { z } from "zod";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { edvClients, edvEmployees } from "../../drizzle/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, inArray } from "drizzle-orm";
+import { assertOrganizationAccess } from "../organizationAccess";
 
 export type EmployeeCsvRow = { fullName: string; taxIdNumber: string; baseSalary: number; cct: string };
 export type ClientCsvRow = { name: string; taxId: string; taxCategory: string; email?: string; phone?: string };
@@ -63,12 +64,14 @@ export function parseClientCsv(csvContent: string) {
 
 export const edvManagementRouter = router({
   listClients: protectedProcedure
-    .input(z.object({ search: z.string().optional(), category: z.string().optional() }).optional())
-    .query(async ({ input }) => {
+    .input(z.object({ organizationId: z.number().int().positive().default(1), search: z.string().optional(), category: z.string().optional() }).optional())
+    .query(async ({ input, ctx }) => {
+      const organizationId = input?.organizationId ?? 1;
+      await assertOrganizationAccess(ctx, organizationId, "read");
       const db = await getDb();
       if (!db) return [];
       let query = db.select().from(edvClients);
-      const list = await query.orderBy(desc(edvClients.createdAt));
+      const list = await query.where(eq(edvClients.organizationId, organizationId)).orderBy(desc(edvClients.createdAt));
       return list.filter(client => {
         const matchesSearch = !input?.search || client.name.toLowerCase().includes(input.search.toLowerCase()) || client.taxId.toLowerCase().includes(input.search.toLowerCase());
         const matchesCategory = !input?.category || input.category === "all" || client.taxCategory === input.category;
@@ -84,12 +87,15 @@ export const edvManagementRouter = router({
         taxCategory: z.string().min(2),
         email: z.string().email().optional().or(z.literal("")),
         phone: z.string().optional(),
+        organizationId: z.number().int().positive().default(1),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      await assertOrganizationAccess(ctx, input.organizationId, "write");
       const db = await getDb();
       if (!db) throw new Error("Base de datos no disponible");
       const inserted = await db.insert(edvClients).values({
+        organizationId: input.organizationId,
         name: input.name,
         taxId: input.taxId,
         taxCategory: input.taxCategory,
@@ -100,8 +106,9 @@ export const edvManagementRouter = router({
     }),
 
   bulkImportClients: protectedProcedure
-    .input(z.object({ csvContent: z.string() }))
-    .mutation(async ({ input }) => {
+    .input(z.object({ csvContent: z.string(), organizationId: z.number().int().positive().default(1) }))
+    .mutation(async ({ input, ctx }) => {
+      await assertOrganizationAccess(ctx, input.organizationId, "write");
       const db = await getDb();
       if (!db) throw new Error("Base de datos no disponible");
       const parsed = parseClientCsv(input.csvContent);
@@ -111,6 +118,7 @@ export const edvManagementRouter = router({
       for (const row of parsed.rows) {
         try {
           await db.insert(edvClients).values({
+            organizationId: input.organizationId,
             name: row.name,
             taxId: row.taxId,
             taxCategory: row.taxCategory,
@@ -135,13 +143,20 @@ export const edvManagementRouter = router({
     }),
 
   listEmployees: protectedProcedure
-    .input(z.object({ clientId: z.number().optional(), search: z.string().optional() }).optional())
-    .query(async ({ input }) => {
+    .input(z.object({ organizationId: z.number().int().positive().default(1), clientId: z.number().optional(), search: z.string().optional() }).optional())
+    .query(async ({ input, ctx }) => {
+      const organizationId = input?.organizationId ?? 1;
+      await assertOrganizationAccess(ctx, organizationId, "read");
       const db = await getDb();
       if (!db) return [];
-      let baseList = input?.clientId
-        ? await db.select().from(edvEmployees).where(eq(edvEmployees.clientId, input.clientId)).orderBy(desc(edvEmployees.createdAt))
-        : await db.select().from(edvEmployees).orderBy(desc(edvEmployees.createdAt));
+      if (input?.clientId) {
+        const client = await db.select().from(edvClients).where(eq(edvClients.id, input.clientId)).limit(1);
+        if (!client[0] || client[0].organizationId !== organizationId) throw new Error("Cliente fuera de la organización seleccionada");
+      }
+      const clientIds = input?.clientId ? [input.clientId] : (await db.select({ id: edvClients.id }).from(edvClients).where(eq(edvClients.organizationId, organizationId))).map(client => client.id);
+      let baseList = clientIds.length
+        ? await db.select().from(edvEmployees).where(inArray(edvEmployees.clientId, clientIds)).orderBy(desc(edvEmployees.createdAt))
+        : [];
 
       return baseList.filter(emp => {
         const matchesSearch = !input?.search || emp.fullName.toLowerCase().includes(input.search.toLowerCase()) || emp.taxIdNumber.toLowerCase().includes(input.search.toLowerCase()) || (emp.cct && emp.cct.toLowerCase().includes(input.search.toLowerCase()));
@@ -153,15 +168,19 @@ export const edvManagementRouter = router({
     .input(
       z.object({
         clientId: z.number(),
+        organizationId: z.number().int().positive().default(1),
         fullName: z.string().min(2),
         taxIdNumber: z.string().min(5),
         baseSalary: z.number().positive(),
         cct: z.string().optional(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      await assertOrganizationAccess(ctx, input.organizationId, "write");
       const db = await getDb();
       if (!db) throw new Error("Base de datos no disponible");
+      const client = await db.select().from(edvClients).where(eq(edvClients.id, input.clientId)).limit(1);
+      if (!client[0] || client[0].organizationId !== input.organizationId) throw new Error("Cliente fuera de la organización seleccionada");
       const inserted = await db.insert(edvEmployees).values({
         clientId: input.clientId,
         fullName: input.fullName,
@@ -176,12 +195,16 @@ export const edvManagementRouter = router({
     .input(
       z.object({
         clientId: z.number(),
+        organizationId: z.number().int().positive().default(1),
         csvContent: z.string(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      await assertOrganizationAccess(ctx, input.organizationId, "write");
       const db = await getDb();
       if (!db) throw new Error("Base de datos no disponible");
+      const client = await db.select().from(edvClients).where(eq(edvClients.id, input.clientId)).limit(1);
+      if (!client[0] || client[0].organizationId !== input.organizationId) throw new Error("Cliente fuera de la organización seleccionada");
 
       const parsed = parseEmployeeCsv(input.csvContent);
       let importedCount = 0;
