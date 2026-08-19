@@ -10,6 +10,7 @@ import TaxConfig from "@/pages/TaxConfig";
 import OpenBanking from "@/pages/OpenBanking";
 import RoleDashboard from "@/pages/RoleDashboard";
 import Approvals from "@/pages/Approvals";
+import ProductionReadiness from "@/pages/ProductionReadiness";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
@@ -26,6 +27,7 @@ function Router() {
       <Route path="/open-banking" component={OpenBanking} />
       <Route path="/rbac" component={RoleDashboard} />
       <Route path="/aprobaciones" component={Approvals} />
+      <Route path="/produccion" component={ProductionReadiness} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

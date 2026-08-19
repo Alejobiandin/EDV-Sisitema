@@ -17,6 +17,7 @@ import { bankingRouter } from "./routers/banking";
 import { organizationsRouter } from "./routers/organizations";
 import { taxConfigsRouter } from "./routers/taxConfigs";
 import { enterpriseRouters } from "./enterpriseModules";
+import { productionReadinessRouter } from "./routers/productionReadiness";
 
 export const appRouter = router({
   system: systemRouter,
@@ -45,6 +46,7 @@ export const appRouter = router({
   organizations: organizationsRouter,
   taxConfigs: taxConfigsRouter,
   enterprise: router(enterpriseRouters),
+  productionReadiness: productionReadinessRouter,
 });
 
 export type AppRouter = typeof appRouter;

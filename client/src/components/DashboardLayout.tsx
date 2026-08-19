@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/sidebar";
 import { startLogin } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { Banknote, Bot, BriefcaseBusiness, FileCheck2, LayoutDashboard, Landmark, LogOut, PanelLeft, ShieldCheck } from "lucide-react";
+import { Activity, Banknote, Bot, BriefcaseBusiness, FileCheck2, LayoutDashboard, Landmark, LogOut, PanelLeft, ShieldCheck } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -39,6 +39,7 @@ const menuItems = [
   { icon: Landmark, label: "Conectar Open Banking", path: "/open-banking", audience: "internal" },
   { icon: ShieldCheck, label: "Panel RBAC", path: "/rbac", audience: "internal" },
   { icon: FileCheck2, label: "Aprobaciones y documentos", path: "/aprobaciones", audience: "all" },
+  { icon: Activity, label: "Preparación productiva", path: "/produccion", audience: "internal" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
