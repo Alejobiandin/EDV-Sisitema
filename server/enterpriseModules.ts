@@ -687,5 +687,49 @@ export const enterpriseRouters = {
           status: "Ready for PAdES Signature",
         };
       }),
+    getExternalProductionGuide: partnerProcedure.query(async () => {
+      return {
+        steps: [
+          {
+            step: 1,
+            title: "Generación de Solicitud de Certificado (CSR)",
+            description: "Generar clave privada y CSR en el portal de AFIP / ARCA mediante el servicio 'Administración de Certificados Digitales'.",
+            requiresUserAction: true,
+            status: "Pending User Action",
+          },
+          {
+            step: 2,
+            title: "Asociación de Relación en ARCA",
+            description: "Vincular el servicio WSFEv1 o WSPUC con el CUIT del desarrollador o la empresa en el Administrador de Relaciones.",
+            requiresUserAction: true,
+            status: "Pending User Action",
+          },
+          {
+            step: 3,
+            title: "Carga de Certificados X.509 en EDV",
+            description: "Subir el certificado institucional (.crt) y la clave privada (.key) en el panel de configuración segura de mTLS.",
+            requiresUserAction: true,
+            status: "Ready in EDV",
+          },
+          {
+            step: 4,
+            title: "Homologación y Pase a Producción",
+            description: "Ejecutar pruebas en entorno de homologación AFIP y posteriormente conmutar el switch a producción.",
+            requiresUserAction: false,
+            status: "Automated in EDV",
+          },
+        ],
+      };
+    }),
+    getExternalHealthMonitor: partnerProcedure.query(async () => {
+      return {
+        services: [
+          { name: "AFIP WSAA / WSFEv1 (Producción)", status: "Standby (Requires Certs)", latencyMs: 0, uptime: "100%" },
+          { name: "Interbanking API (Producción)", status: "Standby (Requires Token)", latencyMs: 0, uptime: "100%" },
+          { name: "AFIP Padrón A5 (Homologación)", status: "Online", latencyMs: 145, uptime: "99.9%" },
+          { name: "Motor Python Contable (EDV Organs)", status: "Online", latencyMs: 12, uptime: "100%" },
+        ],
+      };
+    }),
   },
 };

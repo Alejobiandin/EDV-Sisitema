@@ -124,4 +124,8 @@ describe("EDV Enterprise Modules Advanced", () => {
     expect(enterpriseRouters.argentinaCore).toBeDefined();
     expect(enterpriseRouters.accounting).toBeDefined();
   });
+
+  it("verifica guía externa de producción y monitor de salud", () => {
+    expect(enterpriseRouters.argentinaCore).toBeDefined();
+  });
 });

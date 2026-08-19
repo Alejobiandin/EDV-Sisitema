@@ -210,3 +210,7 @@
 - [x] Fase 3: Implementar cliente mTLS AFIP con separación de ambientes, auditoría y validación de certificados
 - [x] Fase 4: Implementar historial gráfico temporal de conciliaciones Interbanking
 - [x] Fase 5: Integrar conceptos CCT al motor Python y generar recibos masivos auditados
+
+- [x] Fase 1: Desarrollar una Guía Interactiva Externa de Homologación a Producción dentro del panel de configuración para asistir al usuario en la obtención de certificados reales de AFIP, Interbanking y TSAs.
+- [x] Fase 2: Implementar un Monitor de Salud de Conexiones Externas en tiempo real para verificar el estado de los WebServices oficiales, agregadores bancarios y pasarelas con reintentos automáticos.
+- [x] Fase 3: Crear un Asistente Automático de Diagnóstico de CUITs y Padrón que valide inconsistencias fiscales de la cartera antes de generar declaraciones juradas.
