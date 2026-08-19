@@ -202,7 +202,7 @@
 - [x] Fase 6: Implementar exportación Excel comparativa de escenarios de liquidez
 - [x] Fase 7: Validar aislamiento multiempresa, auditoría, pruebas, compilación y checkpoint (83 pruebas pasando)
 
-- [ ] Fase 3: Implementar sincronización diaria del padrón AFIP con auditoría y reintentos
-- [ ] Fase 4: Implementar alertas automáticas de riesgo de liquidez y vencimientos
-- [ ] Fase 5: Implementar conciliación de débitos CSV con pagos Interbanking
-- [ ] Fase 6: Implementar administración de conceptos por convenio colectivo
+- [x] Fase 3: Implementar sincronización diaria del padrón AFIP con auditoría y reintentos
+- [x] Fase 4: Implementar alertas automáticas de riesgo de liquidez y vencimientos
+- [x] Fase 5: Implementar conciliación de débitos CSV con pagos Interbanking
+- [x] Fase 6: Implementar administración de conceptos por convenio colectivo
