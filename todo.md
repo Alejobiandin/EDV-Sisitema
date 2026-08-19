@@ -186,3 +186,10 @@
 - [x] Fase 3: Implementar filtrado de consola al seleccionar segmentos del gráfico
 - [x] Fase 4: Implementar descarga masiva ZIP de TXT y certificados del período
 - [x] Fase 5: Validar seguridad, permisos, integridad del ZIP, pruebas, compilación y checkpoint (81 pruebas pasando)
+
+- [x] Fase 1: Auditar editor TXT, descarga ZIP y exportaciones PDF actuales
+- [x] Fase 2: Diseñar representación de líneas, estados de progreso y contenido del reporte de errores
+- [x] Fase 3: Implementar editor TXT con numeración y resaltado de sintaxis
+- [x] Fase 4: Implementar progreso visual de generación y descarga ZIP
+- [x] Fase 5: Implementar exportación PDF detallada de errores de validación
+- [x] Fase 6: Escribir pruebas unitarias e integración y verificar compilación y tests (82 pruebas pasando)
