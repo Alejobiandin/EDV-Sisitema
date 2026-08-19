@@ -161,3 +161,8 @@
 - [x] Fase 4: Implementar acción de reenvío masivo controlado para correos rebotados o no abiertos
 - [x] Fase 5: Implementar indicador visual de alerta en el dashboard por rebotes críticos de correos
 - [x] Fase 6: Escribir pruebas unitarias e integración y verificar compilación y tests (79 pruebas pasando)
+
+- [x] Fase 1: Revisar exportador laboral y punto de validación previo a AFIP
+- [x] Fase 2: Analizar requisitos técnicos de validación del Libro de Sueldos Digital (LSD)
+- [x] Fase 3: Diseñar el motor de pre-validación sintáctica, semántica y cruzada de liquidaciones
+- [x] Fase 4: Entregar la propuesta de arquitectura de validación automática e informe técnico
