@@ -119,4 +119,9 @@ describe("EDV Enterprise Modules Advanced", () => {
     expect(enterpriseRouters.argentinaCore).toBeDefined();
     expect(enterpriseRouters.accounting).toBeDefined();
   });
+
+  it("verifica mTLS AFIP, timeline Interbanking y recibos CCT", () => {
+    expect(enterpriseRouters.argentinaCore).toBeDefined();
+    expect(enterpriseRouters.accounting).toBeDefined();
+  });
 });

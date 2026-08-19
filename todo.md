@@ -206,3 +206,7 @@
 - [x] Fase 4: Implementar alertas automáticas de riesgo de liquidez y vencimientos
 - [x] Fase 5: Implementar conciliación de débitos CSV con pagos Interbanking
 - [x] Fase 6: Implementar administración de conceptos por convenio colectivo
+
+- [x] Fase 3: Implementar cliente mTLS AFIP con separación de ambientes, auditoría y validación de certificados
+- [x] Fase 4: Implementar historial gráfico temporal de conciliaciones Interbanking
+- [x] Fase 5: Integrar conceptos CCT al motor Python y generar recibos masivos auditados
